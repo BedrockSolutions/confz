@@ -15,5 +15,12 @@
   "bugs": {
     "url": "https://github.com/BedrockSolutions/confz/issues"
   },
-  "homepage": "https://github.com/BedrockSolutions/confz#readme"
+  "homepage": "https://github.com/BedrockSolutions/confz#readme",
+  "dependencies": {
+    "ajv": "^6.10.0",
+    "chalk": "^2.4.2",
+    "chokidar": "^2.1.5",
+    "nunjucks": "^3.2.0",
+    "yargs": "^13.2.2"
+  }
 }

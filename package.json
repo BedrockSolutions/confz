@@ -1,0 +1,19 @@
+{
+  "name": "confz",
+  "version": "0.0.1",
+  "description": "A simple command line utility that creates files from templates and data.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BedrockSolutions/confz.git"
+  },
+  "author": "Bedrock Solutions",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/BedrockSolutions/confz/issues"
+  },
+  "homepage": "https://github.com/BedrockSolutions/confz#readme"
+}

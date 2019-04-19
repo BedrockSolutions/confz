@@ -3,15 +3,15 @@ const { createLogger, format, transports } = require('winston')
 // Make a console logger to start
 const consoleTransport = new transports.Console({
   format: format.cli(),
-  handleExceptions: true
+  handleExceptions: true,
 })
 
 const log = createLogger({
-  transports: [ consoleTransport ],
+  transports: [consoleTransport],
 })
 
 // Winston doesn't currently support unhandled rejections, so...
-process.on('unhandledRejection', (err) => {
+process.on('unhandledRejection', err => {
   log.error('Unhandled promise rejection', err)
 })
 
@@ -45,4 +45,4 @@ process.on('unhandledRejection', (err) => {
 //   log.info('Logging initialized')
 // }
 
-module.exports = {log}
+module.exports = { log }

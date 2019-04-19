@@ -15,34 +15,34 @@ process.on('unhandledRejection', (err) => {
   log.error('Unhandled promise rejection', err)
 })
 
-const initLogging = ({papertrail = {}, stackdriver = {}} = {}) => {
-  if (papertrail.enabled) {
-    // Loads transport into winston.transports
-    require('winston-papertrail').Papertrail
+// const initLogging = ({papertrail = {}, stackdriver = {}} = {}) => {
+//   if (papertrail.enabled) {
+//     // Loads transport into winston.transports
+//     require('winston-papertrail').Papertrail
 
-    const papertrailTransport = new transports.Papertrail({
-      handleExceptions: true,
-      host: papertrail.host,
-      inlineMeta: true,
-      port: papertrail.port,
-      program: 'factoid-address-monitord',
-    })
+//     const papertrailTransport = new transports.Papertrail({
+//       handleExceptions: true,
+//       host: papertrail.host,
+//       inlineMeta: true,
+//       port: papertrail.port,
+//       program: 'factoid-address-monitord',
+//     })
 
-    papertrailTransport.on('error', err => log && log.error(err))
-    papertrailTransport.on('connect', message => log && log.info(message))
+//     papertrailTransport.on('error', err => log && log.error(err))
+//     papertrailTransport.on('connect', message => log && log.info(message))
 
-    log.add(papertrailTransport)
-  }
+//     log.add(papertrailTransport)
+//   }
 
-  if (stackdriver.enabled) {
-    const { LoggingWinston } = require('@google-cloud/logging-winston')
-    const stackdriverTransport = new LoggingWinston({
-      handleExceptions: true
-    })
-    log.add(stackdriverTransport)
-  }
+//   if (stackdriver.enabled) {
+//     const { LoggingWinston } = require('@google-cloud/logging-winston')
+//     const stackdriverTransport = new LoggingWinston({
+//       handleExceptions: true
+//     })
+//     log.add(stackdriverTransport)
+//   }
 
-  log.info('Logging initialized')
-}
+//   log.info('Logging initialized')
+// }
 
-module.exports = {log, initLogging}
+module.exports = {log}

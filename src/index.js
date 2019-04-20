@@ -1,9 +1,17 @@
 const { log } = require('./logging')
 const { getArguments } = require('./commandLine')
+const { ConfzError } = require('./errors')
 const { getGlobalConfig } = require('./globalConfig')
 
-const argv = getArguments()
+const main = async () => {
+  try {
+    const commandArgs = getArguments()
+    const globalConfing = await getGlobalConfig(commandArgs)
+  } catch (err) {
+    if (!(err instanceof ConfzError)) {
+      log.error('An unknown error has occurred: ', err)
+    }
+  }
+}
 
-getGlobalConfig(argv)
-
-console.log(argv)
+main()

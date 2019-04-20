@@ -1,16 +1,8 @@
-const Ajv = require('ajv')
 const { log } = require('./logging')
+const { validate } = require('./validation')
 
 const GLOBAL_CONFIG_SCHEMA = {
   properties: {
-    templateDir: { type: 'string' },
-    resourceDir: { type: 'string' },
-    defaultData: {
-      type: 'array',
-      items: {
-        type: 'string',
-      },
-    },
     data: {
       type: 'array',
       items: {
@@ -20,6 +12,14 @@ const GLOBAL_CONFIG_SCHEMA = {
     dataSchema: {
       type: 'object',
     },
+    defaultData: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
+    resourceDir: { type: 'string' },
+    templateDir: { type: 'string' },
   },
   required: ['templateDir', 'resourceDir'],
   anyOf: [{ required: ['defaultData'] }, { required: ['data'] }],
@@ -33,24 +33,21 @@ const getGlobalConfig = async commandArgs => {
   // 3. Merge global config with confz default config and command args overrides
   // default config -> confz.yaml -> command args = final global config
   // 4. Validate global config against confz JSON schema
-  const ajv = new Ajv({ allErrors: true })
 
   const data = {
     templateDir: ['/foo/bar'],
     resourceDir: '/a/b/c',
-    data: ['/hello/world'],
-    defaultData: ['/z/y/x'],
+    // data: ['/hello/world'],
+    // defaultData: ['/z/y/x'],
   }
 
-  var valid = ajv.validate(GLOBAL_CONFIG_SCHEMA, data)
-  if (!valid) {
-    log.error('validation error', ajv.errors)
-    console.log(ajv.errors)
-  } else {
-    console.log('No Errors')
-  }
+  validate({
+    data,
+    schema: GLOBAL_CONFIG_SCHEMA,
+    schemaName: 'global configuration',
+  })
 
-  return null
+  return data
 }
 
 module.exports = { getGlobalConfig }

@@ -12,7 +12,7 @@ const log = createLogger({
 
 // Winston doesn't currently support unhandled rejections, so...
 process.on('unhandledRejection', err => {
-  log.error('Unhandled promise rejection', err)
+  log.error('Unhandled promise rejection: ', err)
 })
 
 // const initLogging = ({papertrail = {}, stackdriver = {}} = {}) => {

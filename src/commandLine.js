@@ -5,17 +5,20 @@ getArguments = () => {
   const { argv } = require('yargs')
     .strict()
     .usage('$0 [ --config /path/to/confz.yaml ] [ --onetime ]')
-    .option('c', {
-      alias: 'config',
+    .option('config', {
       describe: 'Location of confz.yaml file',
       type: 'string',
     })
-    .option('o', {
-      alias: 'onetime',
+    .option('onetime', {
       describe: 'Run once and exit',
       type: 'boolean',
     })
-    .check(argv => !!argv.config)
+    .check(argv => {
+      if (argv.hasOwnProperty('config') && !argv.config) {
+        throw new Error("The '--config' option must include a path.")
+      }
+      return true
+    })
     .epilog('Copyright Bedrock Solutions, 2019')
 
   const cleanedArgs = pick(['config', 'onetime'], argv)

@@ -18,6 +18,7 @@
   "homepage": "https://github.com/BedrockSolutions/confz#readme",
   "dependencies": {
     "ajv": "^6.10.0",
+    "bluebird": "^3.5.4",
     "chalk": "^2.4.2",
     "chokidar": "^2.1.5",
     "js-yaml": "^3.13.1",

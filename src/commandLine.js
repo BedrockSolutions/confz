@@ -6,16 +6,18 @@ getArguments = () => {
     .strict()
     .usage('$0 [ --config /path/to/confz.yaml ] [ --onetime ]')
     .option('config', {
-      describe: 'Location of confz.yaml file',
+      describe: 'Location of the confz.yaml file',
       type: 'string',
     })
     .option('onetime', {
       describe: 'Run once and exit',
       type: 'boolean',
     })
-    .check(argv => {
-      if (argv.hasOwnProperty('config') && !argv.config) {
-        throw new Error("The '--config' option must include a path.")
+    .check(({ config }) => {
+      if (config !== undefined && !config.endsWith('confz.yaml')) {
+        throw new Error(
+          "The '--config' option must include a path to confz.yaml."
+        )
       }
       return true
     })

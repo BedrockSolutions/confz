@@ -1,6 +1,6 @@
 const { log } = require('./logging')
 const { getArguments } = require('./commandLine')
-const { ConfzError } = require('./errors')
+const { ConfzError } = require('./ConfzError')
 const { getGlobalConfig } = require('./globalConfig')
 
 const main = async () => {

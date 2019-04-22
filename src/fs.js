@@ -1,6 +1,11 @@
 const { F_OK, R_OK, W_OK } = require('fs').constants
-const { access, readFile: readFileAsync, stat } = require('fs').promises
-const { flow } = require('lodash/fp')
+const {
+  access,
+  readdir,
+  readFile: readFileAsync,
+  stat,
+} = require('fs').promises
+const { flatten } = require('lodash/fp')
 const { dirname, resolve } = require('path')
 
 const { ConfzError } = require('./ConfzError')
@@ -57,4 +62,27 @@ const readFile = async path => {
   }
 }
 
-module.exports = { getDirectoryPath, readFile, resolvePaths }
+const getFilesForPath = async path => {
+  if (!(await stat(path)).isDirectory()) {
+    return [path]
+  }
+
+  return getFilesForDir(path)
+}
+
+const getFilesForDir = async dir => {
+  const dirListing = await readdir(dir)
+
+  const files = await Promise.all(
+    dirListing.map(async file => {
+      const resolvedPath = resolve(dir, file)
+      return (await stat(resolvedPath)).isDirectory()
+        ? getFilesForDir(resolvedPath)
+        : resolvedPath
+    })
+  )
+
+  return flatten(files)
+}
+
+module.exports = { getDirectoryPath, getFilesForPath, readFile, resolvePaths }

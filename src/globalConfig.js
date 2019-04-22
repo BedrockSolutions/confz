@@ -63,8 +63,6 @@ const getGlobalConfig = async ({ config = './confz.yaml' }) => {
 
   log.info('Global Config: all paths in configuration successfully resolved')
 
-  console.log(globalConfig)
-
   return globalConfig
 }
 

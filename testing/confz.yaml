@@ -1,7 +1,6 @@
-data:
-- data
+values:
+- testing/defaultData.yaml
+- testing/data
 
-defaultData:
-- defaultData.yaml
-
-resourceDir: resources
+defaultValues:
+- testing/defaultData.yaml

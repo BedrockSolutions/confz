@@ -5,16 +5,16 @@ const { loadFile } = require('./yaml')
 
 const GLOBAL_CONFIG_SCHEMA = {
   properties: {
-    data: {
+    values: {
       type: 'array',
       items: {
         type: 'string',
       },
     },
-    dataSchema: {
+    valuesSchema: {
       type: 'object',
     },
-    defaultData: {
+    defaultValues: {
       type: 'array',
       items: {
         type: 'string',
@@ -24,47 +24,41 @@ const GLOBAL_CONFIG_SCHEMA = {
     templateDir: { type: 'string' },
   },
   required: ['templateDir', 'resourceDir'],
-  anyOf: [{ required: ['defaultData'] }, { required: ['data'] }],
+  anyOf: [{ required: ['defaultValues'] }, { required: ['values'] }],
   additionalProperties: false,
 }
 
-const GLOBAL_CONFIG_DEFAULTS = {
-  resourceDir: 'resources',
-  templateDir: 'templates',
-}
+const DEFAULT_RESOURCE_DIR = 'resources'
+const DEFAULT_TEMPLATE_DIR = 'templates'
 
 const getGlobalConfig = async ({ config = './confz.yaml' }) => {
-  // Steps:
-  // 1. Read file with fs.readFile
-  // 2. Parse file with js-yaml
-  // 3. Merge global config with confz default config and command args overrides
-  // default config -> confz.yaml -> command args = final global config
-  // 4. Validate global config against confz JSON schema
-
   const configFilePath = await resolvePaths([config])
 
   const homeDir = await getDirectoryPath(configFilePath)
   log.info(`Global Config: home directory set to ${homeDir}`)
 
   const prelimGlobalConfig = {
-    ...GLOBAL_CONFIG_DEFAULTS,
+    resourceDir: `${homeDir}/${DEFAULT_RESOURCE_DIR}`,
+    templateDir: `${homeDir}/${DEFAULT_TEMPLATE_DIR}`,
     ...(await loadFile(config)),
   }
   log.info('Global Config: configuration file successfuly loaded')
 
+  console.log(prelimGlobalConfig)
+
   validate(prelimGlobalConfig, GLOBAL_CONFIG_SCHEMA, configFilePath)
 
   const globalConfig = {
-    data: await Promise.all(
-      prelimGlobalConfig.data.map(path => resolvePaths([homeDir, path]))
+    values: await Promise.all(
+      prelimGlobalConfig.values.map(path => resolvePaths([path]))
     ),
-    dataSchema: prelimGlobalConfig.dataSchema,
-    defaultData: await Promise.all(
-      prelimGlobalConfig.defaultData.map(path => resolvePaths([homeDir, path]))
+    valuesSchema: prelimGlobalConfig.valuesSchema,
+    defaultValues: await Promise.all(
+      prelimGlobalConfig.defaultValues.map(path => resolvePaths([path]))
     ),
     homeDir,
-    resourceDir: await resolvePaths([homeDir, prelimGlobalConfig.resourceDir]),
-    templateDir: await resolvePaths([homeDir, prelimGlobalConfig.templateDir]),
+    resourceDir: await resolvePaths([prelimGlobalConfig.resourceDir]),
+    templateDir: await resolvePaths([prelimGlobalConfig.templateDir]),
   }
 
   log.info('Global Config: all paths in configuration successfully resolved')

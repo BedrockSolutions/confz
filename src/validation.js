@@ -6,7 +6,7 @@ const { log } = require('./logging')
 
 class ValidationError extends ConfzError {}
 
-const validate = ({ data, schema, schemaName }) => {
+const validate = (data, schema, schemaName) => {
   const ajv = new Ajv({ allErrors: true })
 
   const valid = ajv.validate(schema, data)

@@ -10,14 +10,18 @@ const FILE_ENCODING = 'utf8'
 
 class FileSystemError extends ConfzError {}
 
-const resolvePath = async (path, { isWritable = false } = {}) => {
-  const resolvedPath = resolve(path)
+const resolvePaths = async (paths, { isWritable = false } = {}) => {
+  const resolvedPath = resolve(...paths)
 
   try {
     await access(resolvedPath, isWritable ? F_OK | R_OK | W_OK : F_OK | R_OK)
   } catch (err) {
-    log.error(`File System: error accessing ${path}: ${err.message}`)
-    throw new FileSystemError(`Error accessing ${path}: ${err.message}`)
+    log.error(
+      `File System: error accessing ${paths.join(', ')}: ${err.message}`
+    )
+    throw new FileSystemError(
+      `Error accessing ${paths.join(', ')}: ${err.message}`
+    )
   }
 
   return resolvedPath
@@ -53,4 +57,4 @@ const readFile = async path => {
   }
 }
 
-module.exports = { getDirectoryPath, readFile, resolvePath }
+module.exports = { getDirectoryPath, readFile, resolvePaths }

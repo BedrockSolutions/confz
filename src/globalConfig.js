@@ -1,6 +1,7 @@
-const { getDirectoryPath, readFile, resolvePath } = require('./fs')
+const { getDirectoryPath, resolvePaths } = require('./fs')
 const { log } = require('./logging')
 const { validate } = require('./validation')
+const { loadFile } = require('./yaml')
 
 const GLOBAL_CONFIG_SCHEMA = {
   properties: {
@@ -27,6 +28,11 @@ const GLOBAL_CONFIG_SCHEMA = {
   additionalProperties: false,
 }
 
+const GLOBAL_CONFIG_DEFAULTS = {
+  resourceDir: 'resources',
+  templateDir: 'templates',
+}
+
 const getGlobalConfig = async ({ config = './confz.yaml' }) => {
   // Steps:
   // 1. Read file with fs.readFile
@@ -35,26 +41,37 @@ const getGlobalConfig = async ({ config = './confz.yaml' }) => {
   // default config -> confz.yaml -> command args = final global config
   // 4. Validate global config against confz JSON schema
 
-  const configFilePath = await resolvePath(config)
-  log.info(`Global Config: configuration file located in ${configFilePath}`)
+  const configFilePath = await resolvePaths([config])
 
-  const confzHomeDir = await getDirectoryPath(configFilePath)
-  log.info(`Global Config: confz home set to ${confzHomeDir}`)
+  const homeDir = await getDirectoryPath(configFilePath)
+  log.info(`Global Config: home directory set to ${homeDir}`)
 
-  const data = {
-    templateDir: '/foo/bar',
-    resourceDir: '/a/b/c',
-    data: ['/hello/world'],
-    defaultData: ['/z/y/x'],
+  const prelimGlobalConfig = {
+    ...GLOBAL_CONFIG_DEFAULTS,
+    ...(await loadFile(config)),
+  }
+  log.info('Global Config: configuration file successfuly loaded')
+
+  validate(prelimGlobalConfig, GLOBAL_CONFIG_SCHEMA, configFilePath)
+
+  const globalConfig = {
+    data: await Promise.all(
+      prelimGlobalConfig.data.map(path => resolvePaths([homeDir, path]))
+    ),
+    dataSchema: prelimGlobalConfig.dataSchema,
+    defaultData: await Promise.all(
+      prelimGlobalConfig.defaultData.map(path => resolvePaths([homeDir, path]))
+    ),
+    homeDir,
+    resourceDir: await resolvePaths([homeDir, prelimGlobalConfig.resourceDir]),
+    templateDir: await resolvePaths([homeDir, prelimGlobalConfig.templateDir]),
   }
 
-  validate({
-    data,
-    schema: GLOBAL_CONFIG_SCHEMA,
-    schemaName: 'global configuration',
-  })
+  log.info('Global Config: all paths in configuration successfully resolved')
 
-  return data
+  console.log(globalConfig)
+
+  return globalConfig
 }
 
 module.exports = { getGlobalConfig }

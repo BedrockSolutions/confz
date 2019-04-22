@@ -1,0 +1,7 @@
+data:
+- data
+
+defaultData:
+- defaultData.yaml
+
+resourceDir: resources

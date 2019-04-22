@@ -10,6 +10,7 @@ const main = async () => {
   } catch (err) {
     if (!(err instanceof ConfzError)) {
       log.error('An unknown error has occurred: ', err)
+      console.log(err.stack)
     }
   }
 }

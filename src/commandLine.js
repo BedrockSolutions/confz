@@ -25,7 +25,7 @@ getArguments = () => {
 
   const cleanedArgs = pick(['config', 'onetime'], argv)
 
-  log.info(`Command args: ${JSON.stringify(cleanedArgs)}`)
+  log.info(`Command Line: ${JSON.stringify(cleanedArgs)}`)
 
   return cleanedArgs
 }

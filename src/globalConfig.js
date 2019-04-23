@@ -45,7 +45,7 @@ const getGlobalConfig = async ({
   const prelimGlobalConfig = {
     resourceDir: `${homeDir}/${DEFAULT_RESOURCE_DIR}`,
     templateDir: `${homeDir}/${DEFAULT_TEMPLATE_DIR}`,
-    ...(await loadFile(config)),
+    ...(await loadFile(configFilePath)),
   }
   log.info('Global Config: configuration file successfuly loaded')
 

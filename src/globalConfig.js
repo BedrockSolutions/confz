@@ -9,6 +9,7 @@ const GLOBAL_CONFIG_SCHEMA = {
       type: 'array',
       items: {
         type: 'string',
+        format: 'uri-reference',
       },
     },
     valuesSchema: {
@@ -18,10 +19,11 @@ const GLOBAL_CONFIG_SCHEMA = {
       type: 'array',
       items: {
         type: 'string',
+        format: 'uri-reference',
       },
     },
-    resourceDir: { type: 'string' },
-    templateDir: { type: 'string' },
+    resourceDir: { type: 'string', format: 'uri-reference' },
+    templateDir: { type: 'string', format: 'uri-reference' },
   },
   required: ['templateDir', 'resourceDir'],
   anyOf: [{ required: ['defaultValues'] }, { required: ['values'] }],
@@ -31,7 +33,10 @@ const GLOBAL_CONFIG_SCHEMA = {
 const DEFAULT_RESOURCE_DIR = 'resources'
 const DEFAULT_TEMPLATE_DIR = 'templates'
 
-const getGlobalConfig = async ({ config = './confz.yaml' }) => {
+const getGlobalConfig = async ({
+  config = './confz.yaml',
+  onetime = false,
+}) => {
   const configFilePath = await resolvePaths([config])
 
   const homeDir = await getDirectoryPath(configFilePath)
@@ -44,19 +49,18 @@ const getGlobalConfig = async ({ config = './confz.yaml' }) => {
   }
   log.info('Global Config: configuration file successfuly loaded')
 
-  console.log(prelimGlobalConfig)
-
   validate(prelimGlobalConfig, GLOBAL_CONFIG_SCHEMA, configFilePath)
 
   const globalConfig = {
-    values: await Promise.all(
-      prelimGlobalConfig.values.map(path => resolvePaths([path]))
+    values: await Promise.map(prelimGlobalConfig.values, path =>
+      resolvePaths([path])
     ),
     valuesSchema: prelimGlobalConfig.valuesSchema,
-    defaultValues: await Promise.all(
-      prelimGlobalConfig.defaultValues.map(path => resolvePaths([path]))
+    defaultValues: await Promise.map(prelimGlobalConfig.defaultValues, path =>
+      resolvePaths([path])
     ),
     homeDir,
+    onetime,
     resourceDir: await resolvePaths([prelimGlobalConfig.resourceDir]),
     templateDir: await resolvePaths([prelimGlobalConfig.templateDir]),
   }

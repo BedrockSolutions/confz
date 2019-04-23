@@ -9,8 +9,8 @@ class YamlException extends ConfzError {}
 const loadFile = async (path, schema) => {
   try {
     const resolvedPath = await resolvePaths([path])
-    const yamlString = await readFile(resolvedPath)
-    const data = safeLoad(yamlString, {
+    const yamlDoc = await readFile(resolvedPath)
+    const data = safeLoad(yamlDoc, {
       filename: resolvedPath,
       schema: FAILSAFE_SCHEMA,
     })

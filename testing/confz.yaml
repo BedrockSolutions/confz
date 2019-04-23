@@ -1,5 +1,4 @@
 values:
-- testing/defaultData.yaml
 - testing/data
 
 defaultValues:

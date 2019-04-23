@@ -1,0 +1,2 @@
+src: template01.njk
+dest: testing/output/resource1.txt

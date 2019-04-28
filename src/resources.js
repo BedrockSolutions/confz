@@ -1,7 +1,11 @@
+const { VError } = require('verror')
+
 const { getDirectoryPath, getFilesForPath, resolvePaths } = require('./fs')
 const { verifyTemplatePath } = require('./templates')
 const { validate } = require('./validation')
 const { loadFile } = require('./yaml')
+
+const ERROR_NAME = 'Resources'
 
 const RESOURCE_SCHEMA = {
   properties: {
@@ -37,36 +41,58 @@ const RESOURCE_SCHEMA = {
 let resources
 
 const initResources = async resourceDir => {
-  const resourcePaths = await getFilesForPath(resourceDir)
+  let resourcePaths
+  try {
+    resourcePaths = await getFilesForPath(resourceDir)
+  } catch (cause) {
+    throw new VError(
+      {
+        cause,
+        name: ERROR_NAME,
+        info: {
+          resourceDir,
+        },
+      },
+      `Error initializing resources at ${resourceDir}`
+    )
+  }
 
   resources = await Promise.reduce(
     resourcePaths,
-    async (memo, path) => {
-      const resource = await loadFile(path)
-      console.log(resource)
+    async (memo, resourcePath) => {
+      try {
+        const resource = await loadFile(resourcePath)
 
-      validate(resource, RESOURCE_SCHEMA, path)
-      verifyTemplatePath(resource.src, {
-        description: `resource ${path} source`,
-      })
+        validate(resource, RESOURCE_SCHEMA, resourcePath)
+        verifyTemplatePath(resource.src)
 
-      const resourceDir = await resolvePaths([resource.dest], {
-        description: `resource ${path} destination`,
-        doesFileExist: false,
-        isWritable: true,
-      })
+        const resourceDir = await resolvePaths([resource.dest], {
+          doesFileExist: false,
+          isWritable: true,
+        })
 
-      memo[path] = {
-        ...resource,
-        dest: resourceDir,
+        memo[resourcePath] = {
+          ...resource,
+          dest: resourceDir,
+        }
+
+        return memo
+      } catch (cause) {
+        throw new VError(
+          {
+            cause,
+            name: ERROR_NAME,
+            info: {
+              resourceDir,
+              resourcePath,
+            },
+          },
+          `Error initializing resources at ${resourceDir}`
+        )
       }
-
-      return memo
     },
     {}
   )
-
-  console.log(resources)
 }
 
 // const processResources = async (values) =>

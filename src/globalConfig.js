@@ -1,5 +1,6 @@
+const { VError } = require('verror')
+
 const { getDirectoryPath, resolvePaths } = require('./fs')
-const { log } = require('./logging')
 const { validate } = require('./validation')
 const { loadFile } = require('./yaml')
 
@@ -30,44 +31,56 @@ const GLOBAL_CONFIG_SCHEMA = {
   additionalProperties: false,
 }
 
+const ERROR_NAME = 'GlobalConfig'
 const DEFAULT_RESOURCE_DIR = 'resources'
 const DEFAULT_TEMPLATE_DIR = 'templates'
 
 const getGlobalConfig = async ({
   config = './confz.yaml',
   onetime = false,
+  printstack = false,
 }) => {
-  const configFilePath = await resolvePaths([config])
+  let configFilePath
+  try {
+    const configFilePath = await resolvePaths([config])
 
-  const homeDir = await getDirectoryPath(configFilePath)
-  log.info(`Global Config: home directory set to ${homeDir}`)
+    const homeDir = await getDirectoryPath(configFilePath)
 
-  const prelimGlobalConfig = {
-    resourceDir: `${homeDir}/${DEFAULT_RESOURCE_DIR}`,
-    templateDir: `${homeDir}/${DEFAULT_TEMPLATE_DIR}`,
-    ...(await loadFile(configFilePath)),
+    const prelimGlobalConfig = {
+      resourceDir: `${homeDir}/${DEFAULT_RESOURCE_DIR}`,
+      templateDir: `${homeDir}/${DEFAULT_TEMPLATE_DIR}`,
+      ...(await loadFile(configFilePath)),
+    }
+
+    validate(prelimGlobalConfig, GLOBAL_CONFIG_SCHEMA, configFilePath)
+
+    const globalConfig = {
+      values: await Promise.map(prelimGlobalConfig.values, path =>
+        resolvePaths([path])
+      ),
+      valuesSchema: prelimGlobalConfig.valuesSchema,
+      defaultValues: await Promise.map(prelimGlobalConfig.defaultValues, path =>
+        resolvePaths([path])
+      ),
+      homeDir,
+      onetime,
+      resourceDir: await resolvePaths([prelimGlobalConfig.resourceDir]),
+      templateDir: await resolvePaths([prelimGlobalConfig.templateDir]),
+    }
+
+    return globalConfig
+  } catch (cause) {
+    throw new VError(
+      {
+        cause,
+        name: ERROR_NAME,
+        info: {
+          configPath: configFilePath || config,
+        },
+      },
+      `Error initializing global configuration`
+    )
   }
-  log.info('Global Config: configuration file successfuly loaded')
-
-  validate(prelimGlobalConfig, GLOBAL_CONFIG_SCHEMA, configFilePath)
-
-  const globalConfig = {
-    values: await Promise.map(prelimGlobalConfig.values, path =>
-      resolvePaths([path])
-    ),
-    valuesSchema: prelimGlobalConfig.valuesSchema,
-    defaultValues: await Promise.map(prelimGlobalConfig.defaultValues, path =>
-      resolvePaths([path])
-    ),
-    homeDir,
-    onetime,
-    resourceDir: await resolvePaths([prelimGlobalConfig.resourceDir]),
-    templateDir: await resolvePaths([prelimGlobalConfig.templateDir]),
-  }
-
-  log.info('Global Config: all paths in configuration successfully resolved')
-
-  return globalConfig
 }
 
 module.exports = { getGlobalConfig }

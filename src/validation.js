@@ -1,31 +1,27 @@
 const Ajv = require('ajv')
-const { flow, map } = require('lodash/fp')
+const { VError } = require('verror')
 
-const { ConfzError } = require('./ConfzError')
-const { log } = require('./logging')
+const ERROR_NAME = 'Validation'
 
-class ValidationError extends ConfzError {}
-
-const validate = (data, schema, schemaName) => {
+const validate = (data, schema) => {
   const ajv = new Ajv({ allErrors: true })
 
   const valid = ajv.validate(schema, data)
 
   if (valid) return
 
-  log.error(
-    `Validation: ${ajv.errors.length} error${
-      ajv.errors.length > 1 ? 's' : ''
-    } occurred when validating ${schemaName}.`
+  const errors = ajv.errors.map(
+    info =>
+      new VError(
+        {
+          name: ERROR_NAME,
+          info,
+        },
+        `Error validating data`
+      )
   )
-  ajv
-    .errorsText()
-    .split(',')
-    .forEach(err => log.error(`Validation: ${err.trim()}`))
 
-  throw new ValidationError(
-    `Error validating ${schemaName}: ${ajv.errorsText()}`
-  )
+  throw VError.errorFromList(errors)
 }
 
 module.exports = { validate }

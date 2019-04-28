@@ -7,77 +7,90 @@ const {
 } = require('fs').promises
 const { flatten } = require('lodash/fp')
 const { dirname, resolve } = require('path')
+const { VError } = require('verror')
 
-const { ConfzError } = require('./ConfzError')
-const { log } = require('./logging')
-
+const ERROR_NAME = 'FileSystem'
 const FILE_ENCODING = 'utf8'
-
-class FileSystemError extends ConfzError {}
 
 const resolvePaths = async (
   paths,
-  { doesFileExist = true, isWritable = false, description = '' } = {}
+  { doesFileExist = true, isWritable = false } = {}
 ) => {
-  let resolvedPath = resolve(...paths)
+  let path
+
   try {
+    path = resolve(...paths)
+
     if (!doesFileExist) {
-      console.log('before')
-      resolvedPath = dirname(resolvedPath)
-      console.log('after')
+      path = dirname(path)
     }
 
-    await access(resolvedPath, isWritable ? F_OK | R_OK | W_OK : F_OK | R_OK)
-    return resolvedPath
-  } catch (err) {
-    log.error(
-      `File System: error accessing ${description &&
-        description + ' '}${resolvedPath}: ${err.message}`
+    await access(path, isWritable ? F_OK | R_OK | W_OK : F_OK | R_OK)
+  } catch (cause) {
+    throw new VError(
+      {
+        cause,
+        name: ERROR_NAME,
+        info: {
+          path,
+          paths,
+        },
+      },
+      `Error resolving paths ${paths.join(', ')}`
     )
-    throw new FileSystemError(`Error accessing ${resolvedPath}: ${err.message}`)
   }
+
+  return path
 }
 
 const getDirectoryPath = async path => {
-  const resolvedPath = resolve(path)
-
   try {
-    const stats = await stat(resolvedPath)
-
-    return stats.isDirectory() ? resolvedPath : dirname(resolvedPath)
-  } catch (err) {
-    log.error(
-      `File System: error getting directory for ${resolvedPath}: ${err.message}`
-    )
-    throw new FileSystemError(
-      `Error getting directory for ${resolvedPath}: ${err.message}`
+    return (await stat(resolve(path))).isDirectory() ? path : dirname(path)
+  } catch (cause) {
+    throw new VError(
+      {
+        cause,
+        name: ERROR_NAME,
+        info: {
+          path,
+        },
+      },
+      `Error getting directory for path ${path}`
     )
   }
 }
 
 const readFile = async path => {
-  const resolvedPath = resolve(path)
-
   try {
-    return readFileAsync(resolvedPath, FILE_ENCODING)
-  } catch (err) {
-    log.error(`File System: error reading file ${resolvedPath}: ${err.message}`)
-    throw new FileSystemError(
-      `Error reading file ${resolvedPath}: ${err.message}`
+    return readFileAsync(resolve(path), FILE_ENCODING)
+  } catch (cause) {
+    throw new VError(
+      {
+        cause,
+        name: ERROR_NAME,
+        info: {
+          path,
+        },
+      },
+      `Error reading file ${path}`
     )
   }
 }
 
 const getFilesForPath = async path => {
   try {
-    if (!(await stat(path)).isDirectory()) {
-      return [path]
-    }
-
-    return getFilesForDir(path)
-  } catch (err) {
-    log.error(`File System: error traversing ${path}: ${err.message}`)
-    throw new FileSystemError(`Error traversing ${path}: ${err.message}`)
+    return !(await stat(path)).isDirectory() ? [path] : getFilesForDir(path)
+  } catch (cause) {
+    throw new VError(
+      {
+        cause,
+        name: ERROR_NAME,
+        info: {
+          path,
+        },
+      },
+      `Error getting files for ${path}`
+    )
   }
 }
 

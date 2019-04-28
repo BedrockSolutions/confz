@@ -1,49 +1,65 @@
 const nunjucks = require('nunjucks')
+const { VError } = require('verror')
 
-const { ConfzError } = require('./ConfzError')
 const { getFilesForPath, readFile } = require('./fs')
 const { log } = require('./logging')
 
 let environment
 
-class TemplateError extends ConfzError {}
+const ERROR_NAME = 'Templates'
 
-const initTemplates = async templateDir => {
+let templateDir
+
+const initTemplates = async _templateDir => {
+  templateDir = _templateDir
   try {
     environment = nunjucks.configure(templateDir, { throwOnUndefined: true })
-  } catch (err) {
-    log.error(
-      `Templates: error initializing templates in ${templateDir}: ${
-        err.message
-      }`
-    )
-    throw new TemplateError(
-      `Error initializing template dir ${templateDir}: ${err.message}`
-    )
-  }
-}
-
-const verifyTemplatePath = (fileName, { description = '' } = {}) => {
-  try {
-    environment.getTemplate(fileName, true)
-  } catch (err) {
-    log.error(
-      `Templates: error accessing ${description &&
-        description + ' '}${fileName}: ${err.message}`
-    )
-    throw new TemplateError(
-      `No template found with name ${fileName}: ${err.message}`
+  } catch (cause) {
+    throw new VError(
+      {
+        cause,
+        name: ERROR_NAME,
+        info: {
+          templateDir,
+        },
+      },
+      `Error initializing templates in ${templateDir}`
     )
   }
 }
 
-const renderTemplate = async (fileName, values) => {
+const verifyTemplatePath = templatePath => {
   try {
-    return environment.render(fileName, values)
-  } catch (err) {
-    log.error(`Templates: error rendering template ${fileName}: ${err.message}`)
-    throw new TemplateError(
-      `Error rendering template ${fileName}: ${err.message}`
+    environment.getTemplate(templatePath, true)
+  } catch (cause) {
+    throw new VError(
+      {
+        cause,
+        name: ERROR_NAME,
+        info: {
+          templateDir,
+          templatePath,
+        },
+      },
+      `Error verifying template at ${templatePath}`
+    )
+  }
+}
+
+const renderTemplate = async (templatePath, values) => {
+  try {
+    return environment.render(templatePath, values)
+  } catch (cause) {
+    throw new VError(
+      {
+        cause,
+        name: ERROR_NAME,
+        info: {
+          templateDir,
+          templatePath,
+        },
+      },
+      `Error rendering template at ${templatePath}`
     )
   }
 }

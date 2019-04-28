@@ -1,16 +1,18 @@
-const { log } = require('./logging')
 const { pick } = require('lodash/fp')
 
 getArguments = () => {
   const { argv } = require('yargs')
-    .strict()
-    .usage('$0 [ --config /path/to/confz.yaml ] [ --onetime ]')
+    .usage('$0 [ --config /path/to/confz.yaml ] [ --onetime ] [ --printstack ]')
     .option('config', {
       describe: 'Location of the confz.yaml file',
       type: 'string',
     })
     .option('onetime', {
       describe: 'Run once and exit',
+      type: 'boolean',
+    })
+    .option('printstack', {
+      describe: 'Print a stack trace when an error occurs',
       type: 'boolean',
     })
     .check(({ config }) => {
@@ -22,12 +24,9 @@ getArguments = () => {
       return true
     })
     .epilog('Copyright Bedrock Solutions, 2019')
+    .strict()
 
-  const cleanedArgs = pick(['config', 'onetime'], argv)
-
-  log.info(`Command Line: ${JSON.stringify(cleanedArgs)}`)
-
-  return cleanedArgs
+  return pick(['config', 'onetime', 'printstack'], argv)
 }
 
 module.exports = { getArguments }

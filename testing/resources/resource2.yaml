@@ -1,2 +1,2 @@
 src: template2.njk
-dest: /foo/bar/bing.txt
+dest: testing/output/resource2.txt

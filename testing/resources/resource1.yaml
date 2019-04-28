@@ -1,2 +1,2 @@
-src: template01.njk
+src: template1.njk
 dest: testing/output/resource1.txt

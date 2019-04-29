@@ -3,3 +3,15 @@ values:
 
 defaultValues:
 - testing/defaultData.yaml
+- testing/defaultData
+
+valuesExtensions:
+- yml
+- yaml
+
+valuesSchema:
+  properties:
+    foo:
+      type: string
+    bar:
+      type: number

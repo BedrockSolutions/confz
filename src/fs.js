@@ -5,8 +5,8 @@ const {
   readFile: readFileAsync,
   stat,
 } = require('fs').promises
-const { flatten } = require('lodash/fp')
-const { dirname, resolve } = require('path')
+const { endsWith, flatten } = require('lodash/fp')
+const { dirname, extname, resolve } = require('path')
 const { VError } = require('verror')
 
 const ERROR_NAME = 'FileSystem'
@@ -77,9 +77,15 @@ const readFile = async path => {
   }
 }
 
-const getFilesForPath = async path => {
+const getFilesForPath = async (path, { allowedExtensions = [] } = {}) => {
   try {
-    return !(await stat(path)).isDirectory() ? [path] : getFilesForDir(path)
+    const files = !(await stat(path)).isDirectory()
+      ? [path]
+      : await getFilesForDir(path)
+
+    return allowedExtensions.length
+      ? files.filter(f => allowedExtensions.some(ex => endsWith(ex, f)))
+      : files
   } catch (cause) {
     throw new VError(
       {

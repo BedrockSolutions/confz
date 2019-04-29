@@ -1,32 +1,37 @@
-const { FAILSAFE_SCHEMA, safeLoad, YAMLException } = require('js-yaml')
+const { DEFAULT_SAFE_SCHEMA, safeLoad, YAMLException } = require('js-yaml')
+const { VError } = require('verror')
 
-const { ConfzError } = require('./ConfzError')
 const { readFile, resolvePaths } = require('./fs')
 const { validate } = require('./validation')
 
-class YamlException extends ConfzError {}
+const ERROR_NAME = 'Yaml'
 
 const loadFile = async (path, schema) => {
+  let yamlPath
   try {
-    const resolvedPath = await resolvePaths([path])
-    const yamlDoc = await readFile(resolvedPath)
+    yamlPath = await resolvePaths([path])
+    const yamlDoc = await readFile(yamlPath)
     const data = safeLoad(yamlDoc, {
-      filename: resolvedPath,
-      schema: FAILSAFE_SCHEMA,
+      filename: yamlPath,
+      schema: DEFAULT_SAFE_SCHEMA,
     })
 
     if (schema) {
-      validate(data, schema, resolvedPath)
+      validate(data, schema)
     }
 
     return data
-  } catch (err) {
-    if (err instanceof ConfzError) {
-      throw err
-    }
-
-    log.error(`YAML: error loading ${resolvedPath}: ${err.message}`)
-    throw new YamlException(`Error loading ${resolvedPath}: ${err.message}`)
+  } catch (cause) {
+    throw new VError(
+      {
+        cause,
+        name: ERROR_NAME,
+        info: {
+          yamlPath,
+        },
+      },
+      `Error loading ${yamlPath}`
+    )
   }
 }
 

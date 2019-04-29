@@ -5,10 +5,10 @@ const { VError, MultiError } = require('verror')
 
 const { log } = require('./logging')
 const { getArguments } = require('./commandLine')
-const { ConfzError } = require('./ConfzError')
 const { getGlobalConfig } = require('./globalConfig')
 const { initResources } = require('./resources')
 const { initTemplates, renderTemplate } = require('./templates')
+const { getValues } = require('./values')
 
 const main = async () => {
   let commandArgs
@@ -17,7 +17,7 @@ const main = async () => {
     log.info(`Command line: ${JSON.stringify(commandArgs)}`)
 
     const globalConfig = await getGlobalConfig(commandArgs)
-    log.info('Global configuration file successfuly loaded')
+    log.info('Global configuration initialized')
 
     await initTemplates(globalConfig.templateDir)
     log.info('Templates initialized')
@@ -25,21 +25,11 @@ const main = async () => {
     await initResources(globalConfig.resourceDir)
     log.info('Resources initialized')
 
+    const values = await getValues(globalConfig)
+
     console.log(await renderTemplate('template1.njk', { foo: 'bar' }))
   } catch (err) {
-    displayDashedLine()
     traverseError(err, commandArgs)
-  }
-}
-
-const displayDashedLine = () =>
-  log.error(chalk`{yellow -------------------------}`)
-
-const displayStackTrace = err => {
-  if (err instanceof VError) {
-    log.error(VError.fullStack(err))
-  } else {
-    log.error(err.stack)
   }
 }
 
@@ -60,6 +50,8 @@ const traverseError = (err, commandArgs) => {
 }
 
 const displayError = (err, commandArgs) => {
+  displayDashedLine()
+
   if (err instanceof VError) {
     VError.errorForEach(err, e => {
       log.error(chalk`{yellowBright Module:} {green ${e.name}}`)
@@ -78,8 +70,17 @@ const displayError = (err, commandArgs) => {
   if (commandArgs && commandArgs.printstack) {
     displayStackTrace(err)
   }
+}
 
-  displayDashedLine()
+const displayDashedLine = () =>
+  log.error(chalk`{yellow -------------------------}`)
+
+const displayStackTrace = err => {
+  if (err instanceof VError) {
+    log.error(VError.fullStack(err))
+  } else {
+    log.error(err.stack)
+  }
 }
 
 // const renderTemplates = async ()

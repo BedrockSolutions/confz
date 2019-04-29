@@ -6,6 +6,13 @@ const { loadFile } = require('./yaml')
 
 const GLOBAL_CONFIG_SCHEMA = {
   properties: {
+    defaultValues: {
+      type: 'array',
+      items: {
+        type: 'string',
+        format: 'uri-reference',
+      },
+    },
     values: {
       type: 'array',
       items: {
@@ -13,15 +20,15 @@ const GLOBAL_CONFIG_SCHEMA = {
         format: 'uri-reference',
       },
     },
-    valuesSchema: {
-      type: 'object',
-    },
-    defaultValues: {
+    valuesExtensions: {
       type: 'array',
       items: {
         type: 'string',
-        format: 'uri-reference',
+        pattern: '^[a-z]+$',
       },
+    },
+    valuesSchema: {
+      type: 'object',
     },
     resourceDir: { type: 'string', format: 'uri-reference' },
     templateDir: { type: 'string', format: 'uri-reference' },
@@ -49,8 +56,11 @@ const getGlobalConfig = async ({
     const prelimGlobalConfig = {
       resourceDir: `${homeDir}/${DEFAULT_RESOURCE_DIR}`,
       templateDir: `${homeDir}/${DEFAULT_TEMPLATE_DIR}`,
+      valuesExtensions: ['yml', 'yaml'],
       ...(await loadFile(configFilePath)),
     }
+
+    console.log(prelimGlobalConfig)
 
     validate(prelimGlobalConfig, GLOBAL_CONFIG_SCHEMA, configFilePath)
 
@@ -58,6 +68,7 @@ const getGlobalConfig = async ({
       values: await Promise.map(prelimGlobalConfig.values, path =>
         resolvePaths([path])
       ),
+      valuesExtensions: prelimGlobalConfig.valuesExtensions,
       valuesSchema: prelimGlobalConfig.valuesSchema,
       defaultValues: await Promise.map(prelimGlobalConfig.defaultValues, path =>
         resolvePaths([path])

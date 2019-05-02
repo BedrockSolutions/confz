@@ -20,7 +20,6 @@ const getValues = async ({
         const files = await getFilesForPath(path, {
           allowedExtensions: valuesExtensions,
         })
-        console.log(path, files)
         return [...memo, ...files]
       },
       []
@@ -31,8 +30,6 @@ const getValues = async ({
       async (memo, path) => merge(memo, await loadFile(path)),
       {}
     )
-
-    console.log(mergedValues)
 
     if (valuesSchema) {
       validate(mergedValues, valuesSchema)

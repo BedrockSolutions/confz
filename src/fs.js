@@ -1,12 +1,16 @@
 const { F_OK, R_OK, W_OK } = require('fs').constants
 const {
   access,
+  chmod,
+  chown,
   readdir,
   readFile: readFileAsync,
   stat,
+  writeFile: writeFileAsync,
 } = require('fs').promises
-const { endsWith, flatten } = require('lodash/fp')
+const { flatten } = require('lodash/fp')
 const { dirname, extname, resolve } = require('path')
+const {gid, uid} = require('userid')
 const { VError } = require('verror')
 
 const ERROR_NAME = 'FileSystem'
@@ -21,11 +25,10 @@ const resolvePaths = async (
   try {
     path = resolve(...paths)
 
-    if (!doesFileExist) {
-      path = dirname(path)
-    }
-
-    await access(path, isWritable ? F_OK | R_OK | W_OK : F_OK | R_OK)
+    await access(
+      doesFileExist ? path : dirname(path),
+      F_OK | R_OK | (isWritable ? W_OK : 0)
+    )
   } catch (cause) {
     throw new VError(
       {
@@ -60,10 +63,14 @@ const getDirectoryPath = async path => {
   }
 }
 
-const readFile = async path => {
+const readFile = async (path, { ignoreMissingFile = false } = {}) => {
   try {
-    return readFileAsync(resolve(path), FILE_ENCODING)
+    return await readFileAsync(resolve(path), FILE_ENCODING)
   } catch (cause) {
+    if (ignoreMissingFile && cause.code === 'ENOENT') {
+      return ''
+    }
+
     throw new VError(
       {
         cause,
@@ -77,6 +84,29 @@ const readFile = async path => {
   }
 }
 
+const writeFile = async (path, data, {mode, owner, group} = {}) => {
+  try {
+    const resolvedPath = resolve(path)
+    console.log('mode', mode.toString(8))
+    await writeFileAsync(resolvedPath, data, {encoding: FILE_ENCODING, mode})
+
+    if (owner && group) {
+      await chown(resolvedPath, uid(owner), gid(group))
+    }
+  } catch (cause) {
+    throw new VError(
+      {
+        cause,
+        name: ERROR_NAME,
+        info: {
+          path,
+        },
+      },
+      `Error writing file ${path}`
+    )
+  }
+}
+
 const getFilesForPath = async (path, { allowedExtensions = [] } = {}) => {
   try {
     const files = !(await stat(path)).isDirectory()
@@ -84,7 +114,7 @@ const getFilesForPath = async (path, { allowedExtensions = [] } = {}) => {
       : await getFilesForDir(path)
 
     return allowedExtensions.length
-      ? files.filter(f => allowedExtensions.some(ex => endsWith(ex, f)))
+      ? files.filter(f => allowedExtensions.some(ex => extname(f) === `.${ex}`))
       : files
   } catch (cause) {
     throw new VError(
@@ -113,4 +143,10 @@ const getFilesForDir = async dir => {
   return flatten(files)
 }
 
-module.exports = { getDirectoryPath, getFilesForPath, readFile, resolvePaths }
+module.exports = {
+  getDirectoryPath,
+  getFilesForPath,
+  readFile,
+  resolvePaths,
+  writeFile,
+}

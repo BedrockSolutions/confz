@@ -1,7 +1,15 @@
+const { pick } = require('lodash')
 const { VError } = require('verror')
 
-const { getDirectoryPath, getFilesForPath, resolvePaths } = require('./fs')
-const { verifyTemplatePath } = require('./templates')
+const {exec} = require('./exec')
+const {
+  getFilesForPath,
+  readFile,
+  resolvePaths,
+  writeFile,
+} = require('./fs')
+const { log } = require('./logging')
+const { renderTemplate, verifyTemplatePath } = require('./templates')
 const { validate } = require('./validation')
 const { loadFile } = require('./yaml')
 
@@ -21,21 +29,38 @@ const RESOURCE_SCHEMA = {
       type: 'string',
       pattern: '^[a-z]+$',
     },
-    mode: {
+    group: {
       type: 'string',
-      pattern: '^[0124567]{4}$',
+      pattern: '^[a-z]+$',
+    },
+    mode: {
+      type: 'integer',
+      pattern: '^0[4567][0124567]{2}$',
     },
     checkCmd: {
       type: 'string',
-      format: 'uri-reference',
     },
     reloadCmd: {
       type: 'string',
-      format: 'uri-reference',
     },
   },
   required: ['src', 'dest'],
   additionalProperties: false,
+  oneOf: [
+    {
+      required: ['owner', 'group']
+    },
+    {
+      properties: {
+        owner: {
+          type: 'null',
+        },
+        group: {
+          type: 'null',
+        }
+      }
+    },
+  ]
 }
 
 let resources
@@ -57,44 +82,93 @@ const initResources = async resourceDir => {
     )
   }
 
-  resources = await Promise.reduce(
-    resourcePaths,
-    async (memo, resourcePath) => {
-      try {
-        const resource = await loadFile(resourcePath)
+  resources = await Promise.map(resourcePaths, async resourcePath => {
+    let resource
+    try {
+      resource = await loadFile(resourcePath)
 
-        validate(resource, RESOURCE_SCHEMA, resourcePath)
-        verifyTemplatePath(resource.src)
+      validate(resource, RESOURCE_SCHEMA, resourcePath)
+      verifyTemplatePath(resource.src)
 
-        const resourceDir = await resolvePaths([resource.dest], {
-          doesFileExist: false,
-          isWritable: true,
-        })
+      resource.dest = await resolvePaths([resource.dest], {
+        doesFileExist: false,
+        isWritable: true,
+      })
 
-        memo[resourcePath] = {
-          ...resource,
-          dest: resourceDir,
-        }
+      resource.path = resourcePath
 
-        return memo
-      } catch (cause) {
-        throw new VError(
-          {
-            cause,
-            name: ERROR_NAME,
-            info: {
-              resourceDir,
-              resourcePath,
-            },
+      return resource
+    } catch (cause) {
+      throw new VError(
+        {
+          cause,
+          name: ERROR_NAME,
+          info: {
+            ...(resource || {}),
+            resourceDir,
+            resourcePath,
           },
-          `Error initializing resources at ${resourceDir}`
-        )
-      }
-    },
-    {}
-  )
+        },
+        `Error initializing resources at ${resourceDir}`
+      )
+    }
+  })
 }
 
-// const processResources = async (values) =>
+const processResources = async values => {
+  let changedResources = []
 
-module.exports = { initResources }
+  await Promise.each(resources, async r => {
+    try {
+      let resourceChanged = false
+
+      const oldRenderedTemplate = await readFile(r.dest, {
+        ignoreMissingFile: true,
+      })
+      const newRenderedTemplate = await renderTemplate(r.src, values)
+
+      if (oldRenderedTemplate !== newRenderedTemplate) {
+        await writeFile(r.dest, newRenderedTemplate, {mode: r.mode, owner: r.owner, group: r.group})
+        resourceChanged = true
+        log.info(`Wrote file ${r.dest}`)
+      }
+
+      if (resourceChanged) {
+        changedResources.push(r)
+      }
+    } catch (cause) {
+      throw new VError(
+        {
+          cause,
+          name: ERROR_NAME,
+          info: r,
+        },
+        `Error processing resource`
+      )
+    }
+  })
+
+  await Promise.each(changedResources, async r => {
+    try {
+      if (r.reloadCmd) {
+        if (r.checkCmd) {
+          await exec(r.checkCmd)
+          log.info(`Check cmd ${r.checkCmd} run`)
+        }
+        await exec(r.reloadCmd)
+        log.info(`Reload cmd ${r.reloadCmd} run`)
+      }
+    } catch (cause) {
+      throw new VError(
+        {
+          cause,
+          name: ERROR_NAME,
+          info: r,
+        },
+        `Error executing resource command`
+      )
+    }
+  })
+}
+
+module.exports = { initResources, processResources }

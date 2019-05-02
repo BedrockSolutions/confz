@@ -60,8 +60,6 @@ const getGlobalConfig = async ({
       ...(await loadFile(configFilePath)),
     }
 
-    console.log(prelimGlobalConfig)
-
     validate(prelimGlobalConfig, GLOBAL_CONFIG_SCHEMA, configFilePath)
 
     const globalConfig = {

@@ -6,8 +6,8 @@ const { VError, MultiError } = require('verror')
 const { log } = require('./logging')
 const { getArguments } = require('./commandLine')
 const { getGlobalConfig } = require('./globalConfig')
-const { initResources } = require('./resources')
-const { initTemplates, renderTemplate } = require('./templates')
+const { initResources, processResources } = require('./resources')
+const { initTemplates } = require('./templates')
 const { getValues } = require('./values')
 
 const main = async () => {
@@ -25,13 +25,23 @@ const main = async () => {
     await initResources(globalConfig.resourceDir)
     log.info('Resources initialized')
 
-    const values = await getValues(globalConfig)
+    const valuesToRenderedTemplates = async () => {
+      const values = await getValues(globalConfig)
+      log.info('Values read')
 
-    console.log(await renderTemplate('template1.njk', { foo: 'bar' }))
+      await processResources(values)
+      log.info('Resources processed')
+    }
+
+    if (globalConfig.onetime) {
+      await valuesToRenderedTemplates()
+    }
   } catch (err) {
     traverseError(err, commandArgs)
   }
 }
+
+// const watchValues =
 
 const traverseError = (err, commandArgs) => {
   if (err instanceof VError) {
@@ -82,7 +92,5 @@ const displayStackTrace = err => {
     log.error(err.stack)
   }
 }
-
-// const renderTemplates = async ()
 
 main()

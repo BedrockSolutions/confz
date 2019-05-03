@@ -30,6 +30,7 @@ const GLOBAL_CONFIG_SCHEMA = {
     valuesSchema: {
       type: 'object',
     },
+    filterDir: { type: 'string', format: 'uri-reference' },
     resourceDir: { type: 'string', format: 'uri-reference' },
     templateDir: { type: 'string', format: 'uri-reference' },
   },
@@ -39,6 +40,7 @@ const GLOBAL_CONFIG_SCHEMA = {
 }
 
 const ERROR_NAME = 'GlobalConfig'
+const DEFAULT_FILTER_DIR = 'filters'
 const DEFAULT_RESOURCE_DIR = 'resources'
 const DEFAULT_TEMPLATE_DIR = 'templates'
 
@@ -54,13 +56,14 @@ const getGlobalConfig = async ({
     const homeDir = await getDirectoryPath(configFilePath)
 
     const prelimGlobalConfig = {
+      filterDir: `${homeDir}/${DEFAULT_FILTER_DIR}`,
       resourceDir: `${homeDir}/${DEFAULT_RESOURCE_DIR}`,
       templateDir: `${homeDir}/${DEFAULT_TEMPLATE_DIR}`,
       valuesExtensions: ['yml', 'yaml'],
       ...(await loadFile(configFilePath)),
     }
 
-    validate(prelimGlobalConfig, GLOBAL_CONFIG_SCHEMA, configFilePath)
+    validate(prelimGlobalConfig, GLOBAL_CONFIG_SCHEMA)
 
     const globalConfig = {
       values: await Promise.map(prelimGlobalConfig.values, path =>
@@ -73,6 +76,7 @@ const getGlobalConfig = async ({
       ),
       homeDir,
       onetime,
+      filterDir: await resolvePaths([prelimGlobalConfig.filterDir]),
       resourceDir: await resolvePaths([prelimGlobalConfig.resourceDir]),
       templateDir: await resolvePaths([prelimGlobalConfig.templateDir]),
     }

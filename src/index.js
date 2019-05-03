@@ -20,7 +20,7 @@ const main = async () => {
     const globalConfig = await getGlobalConfig(commandArgs)
     log.info('Global configuration initialized')
 
-    await initTemplates(globalConfig.templateDir)
+    await initTemplates(globalConfig)
     log.info('Templates initialized')
 
     await initResources(globalConfig.resourceDir)

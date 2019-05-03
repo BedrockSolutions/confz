@@ -35,7 +35,7 @@ const RESOURCE_SCHEMA = {
     },
     mode: {
       type: 'integer',
-      pattern: '^0[4567][0124567]{2}$',
+      pattern: '^[4567][0124567]{2}$',
     },
     checkCmd: {
       type: 'string',
@@ -95,6 +95,8 @@ const initResources = async resourceDir => {
         isWritable: true,
       })
 
+      resource.mode = resource.mode && parseInt(resource.mode.toString(10), 8)
+
       resource.path = resourcePath
 
       return resource
@@ -130,7 +132,7 @@ const processResources = async values => {
       if (oldRenderedTemplate !== newRenderedTemplate) {
         await writeFile(r.dest, newRenderedTemplate, {mode: r.mode, owner: r.owner, group: r.group})
         resourceChanged = true
-        log.info(`Wrote file ${r.dest}`)
+        log.info(`Wrote file '${r.dest}'`)
       }
 
       if (resourceChanged) {
@@ -153,10 +155,10 @@ const processResources = async values => {
       if (r.reloadCmd) {
         if (r.checkCmd) {
           await exec(r.checkCmd)
-          log.info(`Check command ${r.checkCmd} run`)
+          log.info(`Check command '${r.checkCmd}' run`)
         }
         await exec(r.reloadCmd)
-        log.info(`Reload command ${r.reloadCmd} run`)
+        log.info(`Reload command '${r.reloadCmd}' run`)
       }
     } catch (cause) {
       throw new VError(

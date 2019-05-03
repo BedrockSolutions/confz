@@ -23,6 +23,7 @@
     "chokidar": "^2.1.5",
     "js-yaml": "^3.13.1",
     "lodash": "^4.17.11",
+    "node-file-eval": "^1.0.0",
     "nunjucks": "^3.2.0",
     "userid": "^0.3.1",
     "verror": "^1.10.0",

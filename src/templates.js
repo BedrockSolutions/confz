@@ -1,3 +1,4 @@
+const nodeFileEval = require('node-file-eval');
 const nunjucks = require('nunjucks')
 const { VError } = require('verror')
 
@@ -8,18 +9,30 @@ let environment
 
 const ERROR_NAME = 'Templates'
 
-let templateDir
+let templateDir, filterDir
 
-const initTemplates = async _templateDir => {
-  templateDir = _templateDir
+const initTemplates = async (globalConfig) => {
+  templateDir = globalConfig.templateDir
+  filterDir = globalConfig.filterDir
+
   try {
     environment = nunjucks.configure(templateDir, { throwOnUndefined: true })
+
+    const filterPaths = await getFilesForPath(filterDir, ['js'])
+    Promise.each(filterPaths, async path => {
+      const module = await nodeFileEval(path)
+      Object.entries(module).forEach(([name, filter]) => {
+        environment.addFilter(name, filter)
+        log.info(`Filter '${name}' added`)
+      })
+    })
   } catch (cause) {
     throw new VError(
       {
         cause,
         name: ERROR_NAME,
         info: {
+          filterDir,
           templateDir,
         },
       },
@@ -37,6 +50,7 @@ const verifyTemplatePath = templatePath => {
         cause,
         name: ERROR_NAME,
         info: {
+          filterDir,
           templateDir,
           templatePath,
         },
@@ -55,6 +69,7 @@ const renderTemplate = async (templatePath, values) => {
         cause,
         name: ERROR_NAME,
         info: {
+          filterDir,
           templateDir,
           templatePath,
         },

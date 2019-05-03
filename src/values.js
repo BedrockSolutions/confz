@@ -14,23 +14,12 @@ const getValues = async ({
   valuesSchema,
 }) => {
   try {
-    const allValuesPaths = await Promise.reduce(
-      [...defaultValues, ...values],
-      async (memo, path) => {
-        const files = await getFilesForPath(path, {
-          allowedExtensions: valuesExtensions,
-        })
-        return [...memo, ...files]
-      },
-      []
-    )
+    const allValuesPaths = await getAllValuesPaths(values, defaultValues, valuesExtensions)
 
-    const mergedValues = await Promise.reduce(
-      allValuesPaths,
-      async (memo, path) => merge(memo, await loadFile(path)),
-      {}
-    )
+    const allValuesObjects = await getAllValuesObjects(allValuesPaths)
 
+    const mergedValues = allValuesObjects.reduce(merge, [])
+    
     if (valuesSchema) {
       validate(mergedValues, valuesSchema)
     }
@@ -50,5 +39,19 @@ const getValues = async ({
     )
   }
 }
+
+const getAllValuesPaths = async (values, defaultValues, valuesExtensions) =>
+  Promise.reduce(
+    [...defaultValues, ...values],
+    async (memo, path) => {
+      const files = await getFilesForPath(path, {
+        allowedExtensions: valuesExtensions,
+      })
+      return [...memo, ...files]
+    },
+    []
+  )
+
+const getAllValuesObjects = async valuesPaths => Promise.map(valuesPaths, p => loadFile(p))
 
 module.exports = { getValues }

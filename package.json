@@ -28,5 +28,9 @@
     "verror": "^1.10.0",
     "winston": "^3.2.1",
     "yargs": "^13.2.2"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "prettier": "^1.17.0"
   }
 }

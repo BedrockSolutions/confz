@@ -153,10 +153,10 @@ const processResources = async values => {
       if (r.reloadCmd) {
         if (r.checkCmd) {
           await exec(r.checkCmd)
-          log.info(`Check cmd ${r.checkCmd} run`)
+          log.info(`Check command ${r.checkCmd} run`)
         }
         await exec(r.reloadCmd)
-        log.info(`Reload cmd ${r.reloadCmd} run`)
+        log.info(`Reload command ${r.reloadCmd} run`)
       }
     } catch (cause) {
       throw new VError(

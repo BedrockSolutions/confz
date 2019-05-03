@@ -1,6 +1,6 @@
 src: template1.njk
 dest: testing/output/resource1.txt
-mode: 777
+mode: 0777
 owner: jay
 group: everyone
 checkCmd: /bin/ls -l

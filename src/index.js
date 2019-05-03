@@ -9,6 +9,7 @@ const { getGlobalConfig } = require('./globalConfig')
 const { initResources, processResources } = require('./resources')
 const { initTemplates } = require('./templates')
 const { getValues } = require('./values')
+const { watchValues } = require('./watch')
 
 const main = async () => {
   let commandArgs
@@ -27,21 +28,29 @@ const main = async () => {
 
     const valuesToRenderedTemplates = async () => {
       const values = await getValues(globalConfig)
-      log.info('Values read')
+      log.info('Values loaded')
 
       await processResources(values)
-      log.info('Resources processed')
+      log.info('Resource processing complete')
     }
 
-    if (globalConfig.onetime) {
-      await valuesToRenderedTemplates()
+    await valuesToRenderedTemplates()
+    log.info('Initial render complete')
+
+    if (!globalConfig.onetime) {
+      await watchValues(globalConfig, async () => {
+        try {
+          await valuesToRenderedTemplates()
+        } catch (err) {
+          traverseError(err, commandArgs)
+        }
+      })
+      log.info('Values watcher initialized')
     }
   } catch (err) {
     traverseError(err, commandArgs)
   }
 }
-
-// const watchValues =
 
 const traverseError = (err, commandArgs) => {
   if (err instanceof VError) {

@@ -87,7 +87,6 @@ const readFile = async (path, { ignoreMissingFile = false } = {}) => {
 const writeFile = async (path, data, {mode, owner, group} = {}) => {
   try {
     const resolvedPath = resolve(path)
-    console.log('mode', mode.toString(8))
     await writeFileAsync(resolvedPath, data, {encoding: FILE_ENCODING, mode})
 
     if (owner && group) {

@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "description": "A simple command line utility that creates files from templates and data.",
   "main": "index.js",
+  "bin" : { "confz" : "./src/index.js" },
   "scripts": {
+    "build": "pkg . --options no-warnings --out-path ./bin",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

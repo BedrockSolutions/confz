@@ -1,8 +1,10 @@
+const {isFunction} = require('lodash/fp')
 const nodeFileEval = require('node-file-eval');
 const nunjucks = require('nunjucks')
+const {parse} = require('path')
 const { VError } = require('verror')
 
-const { getFilesForPath, readFile } = require('./fs')
+const { getFilesForPath } = require('./fs')
 const { log } = require('./logging')
 
 let environment
@@ -19,12 +21,30 @@ const initTemplates = async (globalConfig) => {
     environment = nunjucks.configure(templateDir, { throwOnUndefined: true })
 
     const filterPaths = await getFilesForPath(filterDir, ['js'])
-    Promise.each(filterPaths, async path => {
-      const module = await nodeFileEval(path)
-      Object.entries(module).forEach(([name, filter]) => {
-        environment.addFilter(name, filter)
-        log.info(`Filter '${name}' added`)
-      })
+    await Promise.each(filterPaths, async path => {
+      try {
+        const module = await nodeFileEval(path)
+
+        if (isFunction(module)) {
+          const name = parse(path).name
+          environment.addFilter(name, module)
+          log.info(`Filter '${name}' added`)
+        } else {
+          Object.entries(module).forEach(([name, filter]) => {
+            environment.addFilter(name, filter)
+            log.info(`Filter '${name}' added`)
+          })
+        }
+      } catch (cause) {
+        throw new VError({
+          cause,
+          name: ERROR_NAME,
+          info: {
+            filterPath: path,
+          },
+        },
+        `Error loading filter at ${path}`)
+      }
     })
   } catch (cause) {
     throw new VError(

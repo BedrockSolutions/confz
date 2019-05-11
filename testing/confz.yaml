@@ -2,8 +2,7 @@ values:
 - testing/data
 
 defaultValues:
-- testing/defaultData.yaml
-- testing/defaultData
+- testing/dynamicDefaults.js
 
 valuesExtensions:
 - yml

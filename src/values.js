@@ -1,7 +1,11 @@
-const { concat, merge } = require('lodash/fp')
+const {flow, map, reduce} = require('awaity/fp')
+const { defaultsDeep } = require('lodash')
+const { flatten, merge, reverse } = require('lodash/fp')
+const nodeFileEval = require('node-file-eval');
+const { extname } = require('path')
 const { VError } = require('verror')
 
-const { getFilesForPath } = require('./fs')
+const { getFilesForPath, readFile } = require('./fs')
 const { validate } = require('./validation')
 const { loadFile } = require('./yaml')
 
@@ -14,17 +18,24 @@ const getValues = async ({
   valuesSchema,
 }) => {
   try {
-    const allValuesPaths = await getAllValuesPaths(values, defaultValues, valuesExtensions)
+    const valuesWithoutDefaults = await flow([
+      map(async path => getFilesForPath(path, { allowedExtensions: valuesExtensions })),
+      flatten,
+      map(loadFileAtPath),
+      reduce(merge, {}),
+    ], values)
 
-    const allValuesObjects = await getAllValuesObjects(allValuesPaths)
+    const finalValues = await flow([
+      reverse,
+      map(async path => loadFileAtPath(path, valuesWithoutDefaults)),
+      reduce(defaultsDeep, valuesWithoutDefaults)
+    ], defaultValues)
 
-    const mergedValues = allValuesObjects.reduce(merge, [])
-    
     if (valuesSchema) {
-      validate(mergedValues, valuesSchema)
+      validate(finalValues, valuesSchema)
     }
 
-    return mergedValues
+    return finalValues
   } catch (cause) {
     throw new VError(
       {
@@ -40,18 +51,20 @@ const getValues = async ({
   }
 }
 
-const getAllValuesPaths = async (values, defaultValues, valuesExtensions) =>
-  Promise.reduce(
-    [...defaultValues, ...values],
-    async (memo, path) => {
-      const files = await getFilesForPath(path, {
-        allowedExtensions: valuesExtensions,
-      })
-      return [...memo, ...files]
-    },
-    []
-  )
+const loadFileAtPath = async (path, values) => {
+  const ext = extname(path)
 
-const getAllValuesObjects = async valuesPaths => Promise.map(valuesPaths, p => loadFile(p))
+  switch (ext) {
+    case '.js':
+      return (await nodeFileEval(path))(values)
+
+    case '.json':
+      return JSON.parse(await readFile(path))
+
+    case '.yml':
+    case '.yaml':
+      return loadFile(path)
+  }
+}
 
 module.exports = { getValues }

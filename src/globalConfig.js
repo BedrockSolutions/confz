@@ -34,7 +34,7 @@ const GLOBAL_CONFIG_SCHEMA = {
     resourceDir: { type: 'string', format: 'uri-reference' },
     templateDir: { type: 'string', format: 'uri-reference' },
   },
-  required: ['templateDir', 'resourceDir'],
+  required: ['filterDir', 'resourceDir', 'templateDir'],
   anyOf: [{ required: ['defaultValues'] }, { required: ['values'] }],
   additionalProperties: false,
 }
@@ -59,7 +59,7 @@ const getGlobalConfig = async ({
       filterDir: `${homeDir}/${DEFAULT_FILTER_DIR}`,
       resourceDir: `${homeDir}/${DEFAULT_RESOURCE_DIR}`,
       templateDir: `${homeDir}/${DEFAULT_TEMPLATE_DIR}`,
-      valuesExtensions: ['yml', 'yaml'],
+      valuesExtensions: ['json', 'yml', 'yaml'],
       ...(await loadFile(configFilePath)),
     }
 

@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "description": "A simple command line utility that creates files from templates and data.",
   "main": "index.js",
-  "bin" : { "confz" : "./src/index.js" },
+  "bin": {
+    "confz": "./src/index.js"
+  },
   "scripts": {
     "build": "pkg . --options no-warnings --out-path ./bin",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -20,6 +22,7 @@
   "homepage": "https://github.com/BedrockSolutions/confz#readme",
   "dependencies": {
     "ajv": "^6.10.0",
+    "awaity": "^1.0.0",
     "bluebird": "^3.5.4",
     "chalk": "^2.4.2",
     "chokidar": "^2.1.5",

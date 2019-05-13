@@ -18,9 +18,9 @@ const initTemplates = async (globalConfig) => {
   filterDir = globalConfig.filterDir
 
   try {
-    environment = nunjucks.configure(templateDir, { throwOnUndefined: true })
+    environment = nunjucks.configure(templateDir, { autoescape: false, throwOnUndefined: true })
 
-    const filterPaths = await getFilesForPath(filterDir, ['js'])
+    const filterPaths = await getFilesForPath(filterDir, {allowedFiles: '^.*\.js$', ignoredFiles: '.*node_modules.*'})
     await Promise.each(filterPaths, async path => {
       try {
         const module = await nodeFileEval(path)
@@ -82,7 +82,7 @@ const verifyTemplatePath = templatePath => {
 
 const renderTemplate = async (templatePath, values) => {
   try {
-    return environment.render(templatePath, values)
+    return environment.addGlobal('this', values).render(templatePath, values)
   } catch (cause) {
     throw new VError(
       {

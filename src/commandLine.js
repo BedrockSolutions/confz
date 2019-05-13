@@ -7,6 +7,10 @@ getArguments = () => {
       describe: 'Location of the confz.yaml file',
       type: 'string',
     })
+    .option('noreload', {
+      describe: 'Do not run resource check and reload commands',
+      type: 'boolean',
+    })
     .option('onetime', {
       describe: 'Run once and exit',
       type: 'boolean',
@@ -26,7 +30,7 @@ getArguments = () => {
     .epilog('Copyright Bedrock Solutions, 2019')
     .strict()
 
-  return pick(['config', 'onetime', 'printstack'], argv)
+  return pick(['config', 'noreload', 'onetime', 'printstack'], argv)
 }
 
 module.exports = { getArguments }

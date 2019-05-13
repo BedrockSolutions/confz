@@ -23,7 +23,7 @@ const main = async () => {
     await initTemplates(globalConfig)
     log.info('Templates initialized')
 
-    await initResources(globalConfig.resourceDir)
+    await initResources(globalConfig)
     log.info('Resources initialized')
 
     const valuesToRenderedTemplates = async () => {
@@ -35,7 +35,7 @@ const main = async () => {
     }
 
     await valuesToRenderedTemplates()
-    log.info('Initial render complete')
+    log.info('Initial run complete')
 
     if (!globalConfig.onetime) {
       await watchValues(globalConfig, async () => {
@@ -73,11 +73,11 @@ const displayError = (err, commandArgs) => {
 
   if (err instanceof VError) {
     VError.errorForEach(err, e => {
-      log.error(chalk`{yellowBright Module:} {green ${e.name}}`)
-      log.error(chalk`{yellowBright Message:} {cyanBright ${e.message}}`)
+      log.error(chalk`{yellow Module:} {green ${e.name}}`)
+      log.error(chalk`{yellow Message:} {red ${e.message}}`)
       Object.entries(VError.info(e)).forEach(([key, value]) =>
         log.error(
-          chalk`{yellowBright Info:} {magentaBright ${key}}: {blueBright ${value}}`
+          chalk`{yellow Info:} {magentaBright ${key}}: {blueBright ${displayInfoValue(value)}}`
         )
       )
     })
@@ -101,5 +101,7 @@ const displayStackTrace = err => {
     log.error(err.stack)
   }
 }
+
+const displayInfoValue = value => ['object', 'array'].includes(typeof value) ? JSON.stringify(value) : value
 
 main()

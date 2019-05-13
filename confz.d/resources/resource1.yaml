@@ -1,0 +1,7 @@
+src: template1.njk
+dest: confz.d/output/resource1.txt
+mode: 777
+#owner: 0
+#group: 0
+checkCmd: /bin/ls -l
+reloadCmd: /bin/ls

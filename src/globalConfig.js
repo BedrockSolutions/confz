@@ -45,9 +45,9 @@ const DEFAULT_RESOURCE_DIR = 'resources'
 const DEFAULT_TEMPLATE_DIR = 'templates'
 
 const getGlobalConfig = async ({
-  config = './confz.yaml',
+  config = './confz.d/confz.yaml',
+  noreload: noReload = false,
   onetime = false,
-  printstack = false,
 }) => {
   let configFilePath
   try {
@@ -75,6 +75,7 @@ const getGlobalConfig = async ({
         resolvePaths([path])
       ),
       homeDir,
+      noReload,
       onetime,
       filterDir: await resolvePaths([prelimGlobalConfig.filterDir]),
       resourceDir: await resolvePaths([prelimGlobalConfig.resourceDir]),

@@ -1,5 +1,5 @@
 const chokidar = require('chokidar')
-const { debounce } = require('lodash')
+const { debounce } = require('lodash/fp')
 const { VError } = require('verror')
 
 const DEBOUNCE_WAIT_IN_MILLIS = 100
@@ -18,8 +18,8 @@ const watchValues = async (
     const watcher = chokidar.watch(values, watcherOptions)
 
     const debouncedOnValuesChanged = debounce(
-      onValuesChanged,
-      DEBOUNCE_WAIT_IN_MILLIS
+      DEBOUNCE_WAIT_IN_MILLIS,
+      onValuesChanged
     )
 
     watcher.on('all', async (event, path) => {
@@ -34,7 +34,6 @@ const watchValues = async (
         name: ERROR_NAME,
         info: {
           values,
-          defaultValues,
           valuesExtensions,
         },
       },

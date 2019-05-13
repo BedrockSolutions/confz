@@ -8,9 +8,8 @@ const {
   stat,
   writeFile: writeFileAsync,
 } = require('fs').promises
-const { flatten } = require('lodash/fp')
+const { flatten, filter, flow, negate } = require('lodash/fp')
 const { dirname, extname, resolve } = require('path')
-const {gid, uid} = require('userid')
 const { VError } = require('verror')
 
 const ERROR_NAME = 'FileSystem'
@@ -90,7 +89,7 @@ const writeFile = async (path, data, {mode, owner, group} = {}) => {
     await writeFileAsync(resolvedPath, data, {encoding: FILE_ENCODING, mode})
 
     if (owner && group) {
-      await chown(resolvedPath, uid(owner), gid(group))
+      await chown(resolvedPath, owner, group)
     }
   } catch (cause) {
     throw new VError(
@@ -106,15 +105,16 @@ const writeFile = async (path, data, {mode, owner, group} = {}) => {
   }
 }
 
-const getFilesForPath = async (path, { allowedExtensions = [] } = {}) => {
+const getFilesForPath = async (path, { allowedFiles = '.*', ignoredFiles = '^\b$' } = {}) => {
   try {
-    const files = !(await stat(path)).isDirectory()
-      ? [path]
-      : await getFilesForDir(path)
+    const files = (await stat(path)).isDirectory()
+      ? await getFilesForDir(path)
+      : [path]
 
-    return allowedExtensions.length
-      ? files.filter(f => allowedExtensions.some(ex => extname(f) === `.${ex}`))
-      : files
+    return flow([
+      filter(path => new RegExp(allowedFiles).test(path)),
+      filter(path => !new RegExp(ignoredFiles).test(path))
+    ])(files)
   } catch (cause) {
     throw new VError(
       {
@@ -129,14 +129,17 @@ const getFilesForPath = async (path, { allowedExtensions = [] } = {}) => {
   }
 }
 
-const getFilesForDir = async dir => {
+const getFilesForDir = async (dir) => {
   const dirListing = await readdir(dir)
 
   const files = await Promise.map(dirListing, async file => {
     const resolvedPath = resolve(dir, file)
-    return (await stat(resolvedPath)).isDirectory()
-      ? getFilesForDir(resolvedPath)
-      : resolvedPath
+
+    if ((await stat(resolvedPath)).isDirectory()) {
+      return getFilesForDir(resolvedPath)
+    } else {
+      return resolvedPath
+    }
   })
 
   return flatten(files)

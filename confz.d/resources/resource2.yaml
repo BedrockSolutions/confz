@@ -1,0 +1,2 @@
+src: template2.njk
+dest: confz.d/output/resource2.txt

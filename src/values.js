@@ -19,7 +19,7 @@ const getValues = async ({
 }) => {
   try {
     const valuesWithoutDefaults = await flow([
-      map(async path => getFilesForPath(path, { allowedExtensions: valuesExtensions })),
+      map(async path => getFilesForPath(path, { allowedFiles: valuesExtensions.join('|') })),
       flatten,
       map(loadFileAtPath),
       reduce(merge, {}),

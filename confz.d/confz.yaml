@@ -1,0 +1,16 @@
+values:
+- confz.d/data
+
+defaultValues:
+- confz.d/dynamicDefaults.js
+
+valuesExtensions:
+- yml
+- yaml
+
+valuesSchema:
+  properties:
+    foo:
+      type: string
+    bar:
+      type: number

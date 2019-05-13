@@ -1,4 +1,3 @@
-const { pick } = require('lodash')
 const { VError } = require('verror')
 
 const {exec} = require('./exec')
@@ -26,12 +25,12 @@ const RESOURCE_SCHEMA = {
       format: 'uri-reference',
     },
     owner: {
-      type: 'string',
-      pattern: '^[a-z]+$',
+      type: 'integer',
+      minimum: 0,
     },
     group: {
-      type: 'string',
-      pattern: '^[a-z]+$',
+      type: 'integer',
+      minimum: 0,
     },
     mode: {
       type: 'integer',
@@ -63,9 +62,11 @@ const RESOURCE_SCHEMA = {
   ]
 }
 
-let resources
+let noReload, resources
 
-const initResources = async resourceDir => {
+const initResources = async ({noReload: _noReload, resourceDir}) => {
+  noReload = _noReload
+
   let resourcePaths
   try {
     resourcePaths = await getFilesForPath(resourceDir)
@@ -94,8 +95,6 @@ const initResources = async resourceDir => {
         doesFileExist: false,
         isWritable: true,
       })
-
-      resource.mode = resource.mode && parseInt(resource.mode.toString(10), 8)
 
       resource.path = resourcePath
 
@@ -130,7 +129,7 @@ const processResources = async values => {
       const newRenderedTemplate = await renderTemplate(r.src, values)
 
       if (oldRenderedTemplate !== newRenderedTemplate) {
-        await writeFile(r.dest, newRenderedTemplate, {mode: r.mode, owner: r.owner, group: r.group})
+        await writeFile(r.dest, newRenderedTemplate, {mode: r.mode && parseInt(r.mode.toString(10), 8), owner: r.owner, group: r.group})
         resourceChanged = true
         log.info(`Wrote file '${r.dest}'`)
       }
@@ -150,27 +149,29 @@ const processResources = async values => {
     }
   })
 
-  await Promise.each(changedResources, async r => {
-    try {
-      if (r.reloadCmd) {
-        if (r.checkCmd) {
-          await exec(r.checkCmd)
-          log.info(`Check command '${r.checkCmd}' run`)
+  if (!noReload) {
+    await Promise.each(changedResources, async r => {
+      try {
+        if (r.reloadCmd) {
+          if (r.checkCmd) {
+            await exec(r.checkCmd)
+            log.info(`Check command '${r.checkCmd}' run`)
+          }
+          await exec(r.reloadCmd)
+          log.info(`Reload command '${r.reloadCmd}' run`)
         }
-        await exec(r.reloadCmd)
-        log.info(`Reload command '${r.reloadCmd}' run`)
+      } catch (cause) {
+        throw new VError(
+          {
+            cause,
+            name: ERROR_NAME,
+            info: r,
+          },
+          `Error executing resource command`
+        )
       }
-    } catch (cause) {
-      throw new VError(
-        {
-          cause,
-          name: ERROR_NAME,
-          info: r,
-        },
-        `Error executing resource command`
-      )
-    }
-  })
+    })
+  }
 }
 
 module.exports = { initResources, processResources }

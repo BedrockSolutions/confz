@@ -34,10 +34,12 @@ const main = async () => {
       log.info('Resource processing complete')
     }
 
-    await valuesToRenderedTemplates()
-    log.info('Initial run complete')
+    if (!globalConfig.skipInitial) {
+      await valuesToRenderedTemplates()
+      log.info('Initial run complete')
+    }
 
-    if (!globalConfig.onetime) {
+    if (!globalConfig.oneTime) {
       await watchValues(globalConfig, async () => {
         try {
           await valuesToRenderedTemplates()

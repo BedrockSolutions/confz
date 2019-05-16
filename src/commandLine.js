@@ -1,4 +1,4 @@
-const { pick } = require('lodash/fp')
+const { omit } = require('lodash/fp')
 
 getArguments = () => {
   const { argv } = require('yargs')
@@ -19,6 +19,10 @@ getArguments = () => {
       describe: 'Print a stack trace when an error occurs',
       type: 'boolean',
     })
+    .option('skipinitial', {
+      describe: 'Skip the initial run',
+      type: 'boolean',
+    })
     .check(({ config }) => {
       if (config !== undefined && !config.endsWith('confz.yaml')) {
         throw new Error(
@@ -27,10 +31,10 @@ getArguments = () => {
       }
       return true
     })
-    .epilog('Copyright Bedrock Solutions, 2019')
+    .epilog('Bedrock Solutions, 2019')
     .strict()
 
-  return pick(['config', 'noreload', 'onetime', 'printstack'], argv)
+  return omit(['_', '$0'], argv)
 }
 
 module.exports = { getArguments }

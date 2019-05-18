@@ -44,15 +44,10 @@ const DEFAULT_FILTER_DIR = 'filters'
 const DEFAULT_RESOURCE_DIR = 'resources'
 const DEFAULT_TEMPLATE_DIR = 'templates'
 
-const getGlobalConfig = async ({
-  config = './confz.d/confz.yaml',
-  noreload: noReload = false,
-  onetime: oneTime = false,
-  skipinitial: skipInitial = false
-}) => {
+const getGlobalConfig = async argv => {
   let configFilePath
   try {
-    const configFilePath = await resolvePaths([config])
+    const configFilePath = await resolvePaths([argv.config])
 
     const homeDir = await getDirectoryPath(configFilePath)
 
@@ -66,7 +61,8 @@ const getGlobalConfig = async ({
 
     validate(prelimGlobalConfig, GLOBAL_CONFIG_SCHEMA)
 
-    const globalConfig = {
+    return {
+      ...argv,
       values: await Promise.map(prelimGlobalConfig.values, path =>
         resolvePaths([path])
       ),
@@ -76,15 +72,10 @@ const getGlobalConfig = async ({
         resolvePaths([path])
       ),
       homeDir,
-      noReload,
-      oneTime,
-      skipInitial,
       filterDir: await resolvePaths([prelimGlobalConfig.filterDir]),
       resourceDir: await resolvePaths([prelimGlobalConfig.resourceDir]),
       templateDir: await resolvePaths([prelimGlobalConfig.templateDir]),
     }
-
-    return globalConfig
   } catch (cause) {
     throw new VError(
       {

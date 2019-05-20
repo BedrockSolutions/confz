@@ -1,11 +1,16 @@
+const { flow } = require('awaity/fp')
+const { get, invoke, forEach } = require('lodash/fp')
+
 const { traverseError } = require('./errors')
 const { getGlobalConfig } = require('./globalConfig')
 const { log } = require('./logging')
 const { initResources, processResources } = require('./resources')
 const { displaySchema } = require('./schema')
 const { initTemplates } = require('./templates')
+const { displayMultilineText } = require('./util')
 const { getValues } = require('./values')
 const { watchValues } = require('./watch')
+const { toYaml } = require('./yaml')
 
 const initCore = async argv => {
   const globalConfig = await getGlobalConfig(argv)
@@ -17,30 +22,77 @@ const initCore = async argv => {
   await initResources(globalConfig)
   log.info('Resources initialized')
 
-  return globalConfig
-}
+  const valuesToRenderedTemplates = async () => {
+    const values = await getValues(globalConfig)
+    log.info('Values loaded')
 
-const createValuesToRenderedTemplates = globalConfig => async () => {
-  const values = await getValues(globalConfig)
-  log.info('Values loaded')
+    const resources = await processResources(values)
+    log.info('Resource processing complete')
 
-  await processResources(values)
-  log.info('Resource processing complete')
+    return resources
+  }
+
+  return {
+    globalConfig,
+    valuesToRenderedTemplates,
+  }
 }
 
 const run = async argv => {
-  const globalConfig = await initCore(argv)
-  await createValuesToRenderedTemplates(globalConfig)()
+  const { valuesToRenderedTemplates } = await initCore(argv)
+  await valuesToRenderedTemplates()
 }
 
-const schema = async argv => {
-  const {valuesSchema} = await getGlobalConfig(argv)
-  displaySchema(valuesSchema)
+const validate = async argv => {
+  const globalConfig = await getGlobalConfig(argv)
+  const values = await getValues(globalConfig)
+  log.info('Values are valid')
+}
+
+const display = async argv => {
+  const {source} = argv
+
+  switch (source) {
+    case 'output':
+      flow([
+        initCore,
+        invoke('valuesToRenderedTemplates'),
+        forEach(r => {
+          if (r.renderedTemplate) {
+            log.info('')
+            log.info(`[Source: ${r.src}, Destination: ${r.dest}]`)
+            displayMultilineText(r.renderedTemplate)
+          }
+        })
+      ])(argv)
+      break
+
+    case 'schema':
+      log.info('')
+      log.info('[Values Schema]')
+      await flow([
+        getGlobalConfig,
+        get('valuesSchema'),
+        toYaml,
+        displayMultilineText
+      ])(argv)
+      break
+
+    case 'values':
+      log.info('')
+      log.info('[Values]')
+      await flow([
+        getGlobalConfig,
+        getValues,
+        toYaml,
+        displayMultilineText
+      ])(argv)
+      break
+  }
 }
 
 const watch = async argv => {
-  const globalConfig = await initCore(argv)
-  const valuesToRenderedTemplates = createValuesToRenderedTemplates(globalConfig)
+  const { globalConfig, valuesToRenderedTemplates } = await initCore(argv)
 
   await watchValues(globalConfig, async () => {
     try {
@@ -55,4 +107,4 @@ const watch = async argv => {
   log.info('Values watcher initialized')
 }
 
-module.exports = { run, schema, watch }
+module.exports = { display, run, validate, watch }

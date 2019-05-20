@@ -1,7 +1,7 @@
 const { flow, omitBy, pickBy } = require('lodash/fp')
 const yargs = require('yargs')
 
-const { run, schema, watch } = require('./commands')
+const { display, run, validate, watch } = require('./commands')
 const { traverseError } = require('./errors')
 const { log } = require('./logging')
 
@@ -19,19 +19,20 @@ const executeCommand = command => async argv => {
     await command(argv)
   } catch (err) {
     traverseError(err, argv)
+    process.exit(-1)
   }
 }
 
 const processCommandLine = () => yargs
   .usage('$0 <command> [options]')
   .option('config', {
-    describe: 'Location of the confz.yaml file.',
+    desc: 'Location of the confz.yaml file.',
     type: 'string',
     default: './confz.d/confz.yaml',
     demandOption: true,
   })
   .option('print-stack', {
-    describe: 'Print a stack trace when an error occurs.',
+    desc: 'Print a stack trace when an error occurs.',
     type: 'boolean',
     default: false,
   })
@@ -46,11 +47,12 @@ const processCommandLine = () => yargs
   .command({
     command: 'run',
     desc: 'Execute a single processing run and exit.',
-    builder: yargs => yargs.option('no-reload', {
-      describe: 'Do not run resource check and reload commands.',
-      type: 'boolean',
-      default: true,
-    }),
+    builder: yargs => yargs
+      .option('no-reload', {
+        desc: 'Do not run resource check and reload commands.',
+        type: 'boolean',
+        default: true,
+      }),
     handler: executeCommand(run),
   })
   .command({
@@ -58,28 +60,39 @@ const processCommandLine = () => yargs
     desc: 'Watch values files and execute a processing run upon changes.',
     builder: yargs => yargs
       .option('exit-on-error', {
-        describe: 'Exit if an error occurs.',
+        desc: 'Exit if an error occurs.',
         type: 'boolean',
         default: false,
       })
       .option('no-reload', {
-        describe: 'Do not run resource check and reload commands.',
+        desc: 'Do not run resource check and reload commands.',
         type: 'boolean',
         default: false,
       })
       .option('run-now', {
-        describe: 'Execute a processing run immediately after initialization.',
+        desc: 'Execute a processing run immediately after initialization.',
         type: 'boolean',
         default: false,
       }),
     handler: executeCommand(watch),
   })
   .command({
-    command: 'schema',
-    desc: 'Print the values schema and exit.',
-    handler: executeCommand(schema),
+    command: 'display <source>',
+    desc: 'Display various types of confz data.',
+    builder: yargs => yargs
+      .positional('source', {
+        desc: 'The source of data',
+        type: 'string',
+        choices: ['output', 'schema', 'values']
+      }),
+    handler: executeCommand(display),
   })
-  .demandCommand(1, 1, 'Please enter a command: run, watch, schema.')
+  .command({
+    command: 'validate',
+    desc: 'Validate the current values and exit.',
+    handler: executeCommand(validate),
+  })
+  .demandCommand(1, 1, 'Please enter a command.')
   .help()
   .epilog('Bedrock Solutions, 2019')
   .strict()

@@ -1,3 +1,4 @@
+const { cloneDeep } = require('lodash/fp')
 const { VError } = require('verror')
 
 const {exec} = require('./exec')
@@ -117,12 +118,10 @@ const initResources = async ({noReload: _noReload, resourceDir}) => {
 }
 
 const processResources = async values => {
-  let changedResources = []
+  const resourcesCopy = cloneDeep(resources)
 
-  await Promise.each(resources, async r => {
+  await Promise.each(resourcesCopy, async r => {
     try {
-      let resourceChanged = false
-
       const oldRenderedTemplate = await readFile(r.dest, {
         ignoreMissingFile: true,
       })
@@ -130,13 +129,11 @@ const processResources = async values => {
 
       if (oldRenderedTemplate !== newRenderedTemplate) {
         await writeFile(r.dest, newRenderedTemplate, {mode: r.mode && parseInt(r.mode.toString(10), 8), owner: r.owner, group: r.group})
-        resourceChanged = true
+        r.changed = true
         log.info(`Wrote file '${r.dest}'`)
       }
 
-      if (resourceChanged) {
-        changedResources.push(r)
-      }
+      r.renderedTemplate = newRenderedTemplate
     } catch (cause) {
       throw new VError(
         {
@@ -150,9 +147,9 @@ const processResources = async values => {
   })
 
   if (!noReload) {
-    await Promise.each(changedResources, async r => {
+    await Promise.each(resourcesCopy, async r => {
       try {
-        if (r.reloadCmd) {
+        if (r.changed && r.reloadCmd) {
           if (r.checkCmd) {
             await exec(r.checkCmd)
             log.info(`Check command '${r.checkCmd}' run`)
@@ -172,6 +169,8 @@ const processResources = async values => {
       }
     })
   }
+
+  return resourcesCopy
 }
 
 module.exports = { initResources, processResources }

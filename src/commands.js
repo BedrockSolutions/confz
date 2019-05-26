@@ -1,11 +1,11 @@
 const { flow } = require('awaity/fp')
+const chalk = require('chalk')
 const { get, invoke, forEach } = require('lodash/fp')
 
 const { traverseError } = require('./errors')
 const { getGlobalConfig } = require('./globalConfig')
 const { log } = require('./logging')
 const { initResources, processResources } = require('./resources')
-const { displaySchema } = require('./schema')
 const { initTemplates } = require('./templates')
 const { displayMultilineText } = require('./util')
 const { getValues } = require('./values')
@@ -54,13 +54,13 @@ const display = async argv => {
 
   switch (source) {
     case 'output':
-      flow([
+      await flow([
         initCore,
         invoke('valuesToRenderedTemplates'),
         forEach(r => {
           if (r.renderedTemplate) {
             log.info('')
-            log.info(`[Source: ${r.src}, Destination: ${r.dest}]`)
+            log.info(chalk`{magentaBright [Source: ${r.src}, Destination: ${r.dest}]}`)
             displayMultilineText(r.renderedTemplate)
           }
         })
@@ -69,7 +69,7 @@ const display = async argv => {
 
     case 'schema':
       log.info('')
-      log.info('[Values Schema]')
+      log.info(chalk`{magentaBright [Values Schema]}`)
       await flow([
         getGlobalConfig,
         get('valuesSchema'),
@@ -80,7 +80,7 @@ const display = async argv => {
 
     case 'values':
       log.info('')
-      log.info('[Values]')
+      log.info(chalk`{magentaBright [Values]}`)
       await flow([
         getGlobalConfig,
         getValues,

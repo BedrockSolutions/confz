@@ -37,7 +37,7 @@ const displayError = (err, commandArgs) => {
     log.error(err.message)
   }
 
-  if (commandArgs && commandArgs.printstack) {
+  if (commandArgs && commandArgs.printStack) {
     displayStackTrace(err)
   }
 }

@@ -5,18 +5,18 @@ const { VError } = require('verror')
 
 const { log } = require('./logging')
 
-marked.setOptions({
-  renderer: new TerminalRenderer()
-});
+// marked.setOptions({
+//   renderer: new TerminalRenderer()
+// });
 
 const ERROR_NAME = 'Display Schema'
 
-const displaySchema = schema => {
+const displaySchemaAsHtml = schema => {
   try {
     const markdown = jsonToMarkdown(schema)
     console.log(markdown)
     const terminalText = marked(markdown)
-    console.log(terminalText)
+    console.log(marked(markdown))
     // log.info('')
     // terminalText.split(/\r?\n/).forEach(line => log.info(line))
   } catch (cause) {
@@ -30,4 +30,4 @@ const displaySchema = schema => {
   }
 }
 
-module.exports = { displaySchema }
+module.exports = { displaySchemaAsHtml }

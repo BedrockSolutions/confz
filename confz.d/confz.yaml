@@ -7,12 +7,3 @@ defaultValues:
 valuesExtensions:
 - yml
 - yaml
-
-valuesSchema:
-  description: An awesome schema
-  type: object
-  properties:
-    foo:
-      type: string
-    bar:
-      type: number

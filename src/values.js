@@ -1,15 +1,15 @@
-const {flow, map, reduce} = require('awaity/fp')
-const { defaultsDeep } = require('lodash')
-const { flatten, merge, reverse } = require('lodash/fp')
-const nodeFileEval = require('node-file-eval');
-const { extname } = require('path')
+const {flow, map} = require('awaity/fp')
+const { flatten, isArray, isFunction, mergeAllWith } = require('lodash/fp')
 const { VError } = require('verror')
 
-const { getFilesForPath, readFile } = require('./fs')
+const { getFilesForPath } = require('./fs')
+const { loadFileAtPath } = require('./util')
 const { validate } = require('./validation')
-const { loadFile } = require('./yaml')
 
 const ERROR_NAME = 'Values'
+
+const mergeValues = values =>
+  mergeAllWith((objValue, srcValue) => isArray(objValue) || isArray(srcValue) ? srcValue : undefined)([{}, ...values])
 
 const getValues = async ({
   values,
@@ -22,13 +22,13 @@ const getValues = async ({
       map(async path => getFilesForPath(path, { allowedFiles: valuesExtensions.join('|') })),
       flatten,
       map(loadFileAtPath),
-      reduce(merge, {}),
+      mergeValues,
     ], values)
 
     const finalValues = await flow([
-      reverse,
-      map(async path => loadFileAtPath(path, valuesWithoutDefaults)),
-      reduce(defaultsDeep, valuesWithoutDefaults)
+      map(loadFileAtPath),
+      map(objOrFunc => isFunction(objOrFunc) ? objOrFunc(valuesWithoutDefaults): objOrFunc),
+      values => mergeValues([...values, valuesWithoutDefaults])
     ], defaultValues)
 
     if (valuesSchema) {
@@ -48,22 +48,6 @@ const getValues = async ({
       },
       `Error loading values`
     )
-  }
-}
-
-const loadFileAtPath = async (path, values) => {
-  const ext = extname(path)
-
-  switch (ext) {
-    case '.js':
-      return (await nodeFileEval(path))(values)
-
-    case '.json':
-      return JSON.parse(await readFile(path))
-
-    case '.yml':
-    case '.yaml':
-      return loadFile(path)
   }
 }
 

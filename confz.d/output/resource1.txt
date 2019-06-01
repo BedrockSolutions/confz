@@ -1,5 +1,5 @@
-Hello world 15353534!
+Hello world NaN!
 
-Goodbye world 38383835 !!!
+Goodbye world NaN !!!
 
-jhkjhkj
+fooFrom2

@@ -1,5 +1,13 @@
-foo: barfkhk
+foo: fooFrom1
 
-bar: ehhl
+bar: barFrom1
 
-a: 0
+a:
+  - foo
+  - bar
+  - blah
+
+b:
+  first: first
+  second: second
+  third: third

@@ -14,15 +14,13 @@ FROM alpine:latest
 WORKDIR /app
 
 RUN \
-  apk add --no-cache libstdc++ && \
-  addgroup -g 65530 -S app && \
-  adduser -u 65530 -h /app -G app -S app
+  apk add --no-cache libstdc++
 
 COPY --from=node /home/node/confz-* ./
 
-RUN chown -R app:app .
+RUN chown -R nobody:nobody .
 
-USER app
+USER nobody
 
 ENTRYPOINT ["./confz-alpine"]
 

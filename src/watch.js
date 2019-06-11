@@ -6,13 +6,13 @@ const DEBOUNCE_WAIT_IN_MILLIS = 100
 const ERROR_NAME = 'File Watch'
 
 const watchValues = async (
-  { values = [], valuesExtensions = [] },
+  { values = [], valuesExtensions = [], runNow },
   onValuesChanged
 ) => {
   try {
     const watcherOptions = {
       awaitWriteFinish: true,
-      ignoreInitial: true,
+      ignoreInitial: !runNow,
     }
 
     const watcher = chokidar.watch(values, watcherOptions)

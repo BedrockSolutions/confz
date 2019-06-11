@@ -1,3 +1,5 @@
-Hello world 246!
+Hello world NaN!
 
-Goodbye world 615 !!!
+Goodbye world NaN !!!
+
+fooFrom2

@@ -10,11 +10,6 @@ const log = createLogger({
   transports: [consoleTransport],
 })
 
-// Winston doesn't currently support unhandled rejections, so...
-process.on('unhandledRejection', err => {
-  log.error('Unhandled promise rejection: ', err)
-})
-
 // const initLogging = ({papertrail = {}, stackdriver = {}} = {}) => {
 //   if (papertrail.enabled) {
 //     // Loads transport into winston.transports

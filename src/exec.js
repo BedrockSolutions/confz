@@ -6,7 +6,7 @@ const ERROR_NAME = 'Exec'
 
 const exec = async cmd => {
   try {
-    const foo = await execAsync(cmd)
+    await execAsync(cmd)
   } catch (cause) {
     throw new VError(
       {

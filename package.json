@@ -1,6 +1,6 @@
 {
   "name": "confz",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A simple command line utility that creates files from templates and data.",
   "main": "index.js",
   "bin": {
@@ -11,7 +11,7 @@
     "exec": "docker run bedrocksolutions/confz:latest",
     "pkg": "pkg . --options no-warnings --targets alpine,linux",
     "push": "docker push bedrocksolutions/confz:latest",
-    "test": "node src/index.js --config ./confz.d/confz.yaml --printstack"
+    "test": "node src/index.js run --config ./confz.d/confz.yaml --print-stack"
   },
   "repository": {
     "type": "git",
@@ -25,12 +25,16 @@
   "homepage": "https://github.com/BedrockSolutions/confz#readme",
   "dependencies": {
     "ajv": "^6.10.0",
+    "ajv-merge-patch": "^4.1.0",
     "awaity": "^1.0.0",
     "bluebird": "^3.5.4",
     "chalk": "^2.4.2",
     "chokidar": "^2.1.5",
     "js-yaml": "^3.13.1",
+    "json-schema-to-markdown": "^1.1.0",
     "lodash": "^4.17.11",
+    "marked": "^0.6.2",
+    "marked-terminal": "^3.2.0",
     "node-file-eval": "^1.0.0",
     "nunjucks": "^3.2.0",
     "verror": "^1.10.0",

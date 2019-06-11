@@ -1,4 +1,4 @@
-FROM node:10 AS node
+FROM node:10-alpine AS node
 
 WORKDIR /home/node
 
@@ -11,16 +11,16 @@ RUN npm run pkg
 
 FROM alpine:latest
 
-WORKDIR /home/app
+WORKDIR /app
 
 RUN \
-  apk add --no-cache libstdc++ shadow && \
-  groupadd -g 1000 app && \
-  useradd -r -m -u 1000 -g app app
+  apk add --no-cache libstdc++
 
 COPY --from=node /home/node/confz-* ./
 
-USER app
+RUN chown -R nobody:nobody .
+
+USER nobody
 
 ENTRYPOINT ["./confz-alpine"]
 

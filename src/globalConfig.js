@@ -1,6 +1,7 @@
 const { VError } = require('verror')
 
 const { getDirectoryPath, resolvePaths } = require('./fs')
+const { loadFileAtPath } = require('./util')
 const { validate } = require('./validation')
 const { loadFile } = require('./yaml')
 
@@ -28,7 +29,8 @@ const GLOBAL_CONFIG_SCHEMA = {
       },
     },
     valuesSchema: {
-      type: 'object',
+      type: 'string',
+      format: 'uri-reference',
     },
     filterDir: { type: 'string', format: 'uri-reference' },
     resourceDir: { type: 'string', format: 'uri-reference' },
@@ -43,16 +45,12 @@ const ERROR_NAME = 'GlobalConfig'
 const DEFAULT_FILTER_DIR = 'filters'
 const DEFAULT_RESOURCE_DIR = 'resources'
 const DEFAULT_TEMPLATE_DIR = 'templates'
+const DEFAULT_VALUES_SCHEMA = 'schema.yaml'
 
-const getGlobalConfig = async ({
-  config = './confz.d/confz.yaml',
-  noreload: noReload = false,
-  onetime: oneTime = false,
-  skipinitial: skipInitial = false
-}) => {
+const getGlobalConfig = async argv => {
   let configFilePath
   try {
-    const configFilePath = await resolvePaths([config])
+    const configFilePath = await resolvePaths([argv.config])
 
     const homeDir = await getDirectoryPath(configFilePath)
 
@@ -60,38 +58,35 @@ const getGlobalConfig = async ({
       filterDir: `${homeDir}/${DEFAULT_FILTER_DIR}`,
       resourceDir: `${homeDir}/${DEFAULT_RESOURCE_DIR}`,
       templateDir: `${homeDir}/${DEFAULT_TEMPLATE_DIR}`,
+      valuesSchema: `${homeDir}/${DEFAULT_VALUES_SCHEMA}`,
       valuesExtensions: ['json', 'yml', 'yaml'],
       ...(await loadFile(configFilePath)),
     }
 
     validate(prelimGlobalConfig, GLOBAL_CONFIG_SCHEMA)
 
-    const globalConfig = {
+    return {
+      ...argv,
       values: await Promise.map(prelimGlobalConfig.values, path =>
         resolvePaths([path])
       ),
       valuesExtensions: prelimGlobalConfig.valuesExtensions,
-      valuesSchema: prelimGlobalConfig.valuesSchema,
+      valuesSchema: await loadFileAtPath(prelimGlobalConfig.valuesSchema),
       defaultValues: await Promise.map(prelimGlobalConfig.defaultValues, path =>
         resolvePaths([path])
       ),
       homeDir,
-      noReload,
-      oneTime,
-      skipInitial,
       filterDir: await resolvePaths([prelimGlobalConfig.filterDir]),
       resourceDir: await resolvePaths([prelimGlobalConfig.resourceDir]),
       templateDir: await resolvePaths([prelimGlobalConfig.templateDir]),
     }
-
-    return globalConfig
   } catch (cause) {
     throw new VError(
       {
         cause,
         name: ERROR_NAME,
         info: {
-          configPath: configFilePath || config,
+          configPath: configFilePath || argv.config,
         },
       },
       `Error initializing global configuration`

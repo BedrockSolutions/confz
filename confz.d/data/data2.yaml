@@ -1,5 +1,11 @@
-foo: zzzzz
+foo: fooFrom2
 
-bar: 123
+bar: barFrom2
 
-b: 1
+a:
+  - apple
+  - orange
+
+b:
+  first: notFirst
+  second: notSecond

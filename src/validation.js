@@ -1,10 +1,12 @@
 const Ajv = require('ajv')
+const ajvMergePatch = require('ajv-merge-patch')
 const { VError } = require('verror')
 
 const ERROR_NAME = 'Validation'
 
 const validate = (data, schema) => {
   const ajv = new Ajv({ allErrors: true })
+  ajvMergePatch(ajv)
 
   const valid = ajv.validate(schema, data)
 

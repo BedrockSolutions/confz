@@ -7,10 +7,9 @@
     "confz": "./src/index.js"
   },
   "scripts": {
-    "build": "docker build -t confz:latest -t bedrocksolutions/confz:latest .",
+    "build": "docker build -t confz:latest .",
     "exec": "docker run bedrocksolutions/confz:latest",
     "pkg": "pkg . --options no-warnings --targets alpine,linux",
-    "push": "docker push bedrocksolutions/confz:latest",
     "test": "node src/index.js run --config ./confz.d/confz.yaml --print-stack"
   },
   "repository": {

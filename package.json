@@ -1,6 +1,6 @@
 {
   "name": "confz",
-  "version": "0.3.0",
+  "version": "0.2.0",
   "description": "A simple command line utility that creates files from templates and data.",
   "main": "index.js",
   "bin": {
@@ -10,6 +10,7 @@
     "build": "docker build -t confz:latest .",
     "exec": "docker run bedrocksolutions/confz:latest",
     "pkg": "pkg . --options no-warnings --targets alpine,linux",
+    "publish": "node bin/publish.js",
     "test": "node src/index.js run --config ./confz.d/confz.yaml --print-stack"
   },
   "repository": {

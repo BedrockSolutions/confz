@@ -1,12 +1,12 @@
-FROM node:10-alpine AS node
+FROM node:12-alpine AS node
 
 WORKDIR /home/node
 
 COPY ./package.json .
-COPY ./package-lock.json .
 COPY ./src ./src
 
-RUN npm install
+RUN apk add --no-cache git
+RUN npm install --no-optional --no-shrinkwrap --no-package-lock
 RUN npm run pkg
 
 FROM alpine:latest

@@ -83,10 +83,10 @@ const readFile = async (path, { ignoreMissingFile = false } = {}) => {
   }
 }
 
-const writeFile = async (path, data, {mode, owner, group} = {}) => {
+const writeFile = async (path, data, { mode, owner, group } = {}) => {
   try {
     const resolvedPath = resolve(path)
-    await writeFileAsync(resolvedPath, data, {encoding: FILE_ENCODING, mode})
+    await writeFileAsync(resolvedPath, data, { encoding: FILE_ENCODING, mode })
 
     if (owner && group) {
       await chown(resolvedPath, owner, group)
@@ -105,7 +105,10 @@ const writeFile = async (path, data, {mode, owner, group} = {}) => {
   }
 }
 
-const getFilesForPath = async (path, { allowedFiles = '.*', ignoredFiles = '^\b$' } = {}) => {
+const getFilesForPath = async (
+  path,
+  { allowedFiles = '.*', ignoredFiles = '^\b$' } = {}
+) => {
   try {
     const files = (await stat(path)).isDirectory()
       ? await getFilesForDir(path)
@@ -113,7 +116,7 @@ const getFilesForPath = async (path, { allowedFiles = '.*', ignoredFiles = '^\b$
 
     return flow([
       filter(path => new RegExp(allowedFiles).test(path)),
-      filter(path => !new RegExp(ignoredFiles).test(path))
+      filter(path => !new RegExp(ignoredFiles).test(path)),
     ])(files)
   } catch (cause) {
     throw new VError(
@@ -129,7 +132,7 @@ const getFilesForPath = async (path, { allowedFiles = '.*', ignoredFiles = '^\b$
   }
 }
 
-const getFilesForDir = async (dir) => {
+const getFilesForDir = async dir => {
   const dirListing = await readdir(dir)
 
   const files = await Promise.map(dirListing, async file => {

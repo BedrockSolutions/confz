@@ -1,4 +1,4 @@
-const {flow, map} = require('awaity/fp')
+const { flow, map } = require('awaity/fp')
 const { flatten, isArray, isFunction, mergeAllWith } = require('lodash/fp')
 const { VError } = require('verror')
 
@@ -9,7 +9,9 @@ const { validate } = require('./validation')
 const ERROR_NAME = 'Values'
 
 const mergeValues = values =>
-  mergeAllWith((objValue, srcValue) => isArray(objValue) || isArray(srcValue) ? srcValue : undefined)([{}, ...values])
+  mergeAllWith((objValue, srcValue) =>
+    isArray(objValue) || isArray(srcValue) ? srcValue : undefined
+  )([{}, ...values])
 
 const getValues = async ({
   values,
@@ -18,18 +20,28 @@ const getValues = async ({
   valuesSchema,
 }) => {
   try {
-    const valuesWithoutDefaults = await flow([
-      map(async path => getFilesForPath(path, { allowedFiles: valuesExtensions.join('|') })),
-      flatten,
-      map(loadFileAtPath),
-      mergeValues,
-    ], values)
+    const valuesWithoutDefaults = await flow(
+      [
+        map(async path =>
+          getFilesForPath(path, { allowedFiles: valuesExtensions.join('|') })
+        ),
+        flatten,
+        map(loadFileAtPath),
+        mergeValues,
+      ],
+      values
+    )
 
-    const finalValues = await flow([
-      map(loadFileAtPath),
-      map(objOrFunc => isFunction(objOrFunc) ? objOrFunc(valuesWithoutDefaults): objOrFunc),
-      values => mergeValues([...values, valuesWithoutDefaults])
-    ], defaultValues)
+    const finalValues = await flow(
+      [
+        map(loadFileAtPath),
+        map(objOrFunc =>
+          isFunction(objOrFunc) ? objOrFunc(valuesWithoutDefaults) : objOrFunc
+        ),
+        values => mergeValues([...values, valuesWithoutDefaults]),
+      ],
+      defaultValues
+    )
 
     if (valuesSchema) {
       validate(finalValues, valuesSchema)

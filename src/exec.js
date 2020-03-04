@@ -1,6 +1,8 @@
-const {VError} = require('verror')
+const { VError } = require('verror')
 
-const execAsync = Promise.promisify(require('child_process').exec, {multiArgs: true})
+const execAsync = Promise.promisify(require('child_process').exec, {
+  multiArgs: true,
+})
 
 const ERROR_NAME = 'Exec'
 

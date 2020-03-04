@@ -1,6 +1,6 @@
 const jsonToMarkdown = require('json-schema-to-markdown')
-const marked = require('marked');
-const TerminalRenderer = require('marked-terminal');
+const marked = require('marked')
+const TerminalRenderer = require('marked-terminal')
 const { VError } = require('verror')
 
 const { log } = require('./logging')

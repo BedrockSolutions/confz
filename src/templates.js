@@ -1,7 +1,7 @@
-const {isFunction} = require('lodash/fp')
-const nodeFileEval = require('node-file-eval');
+const { isFunction } = require('lodash/fp')
+const nodeFileEval = require('node-file-eval')
 const nunjucks = require('nunjucks')
-const {parse} = require('path')
+const { parse } = require('path')
 const { VError } = require('verror')
 
 const { getFilesForPath } = require('./fs')
@@ -13,14 +13,20 @@ const ERROR_NAME = 'Templates'
 
 let templateDir, filterDir
 
-const initTemplates = async (globalConfig) => {
+const initTemplates = async globalConfig => {
   templateDir = globalConfig.templateDir
   filterDir = globalConfig.filterDir
 
   try {
-    environment = nunjucks.configure(templateDir, { autoescape: false, throwOnUndefined: true })
+    environment = nunjucks.configure(templateDir, {
+      autoescape: false,
+      throwOnUndefined: true,
+    })
 
-    const filterPaths = await getFilesForPath(filterDir, {allowedFiles: '^.*\.js$', ignoredFiles: '.*node_modules.*'})
+    const filterPaths = await getFilesForPath(filterDir, {
+      allowedFiles: '^.*.js$',
+      ignoredFiles: '.*node_modules.*',
+    })
     await Promise.each(filterPaths, async path => {
       try {
         const module = await nodeFileEval(path)
@@ -36,14 +42,16 @@ const initTemplates = async (globalConfig) => {
           })
         }
       } catch (cause) {
-        throw new VError({
-          cause,
-          name: ERROR_NAME,
-          info: {
-            filterPath: path,
+        throw new VError(
+          {
+            cause,
+            name: ERROR_NAME,
+            info: {
+              filterPath: path,
+            },
           },
-        },
-        `Error loading filter at ${path}`)
+          `Error loading filter at ${path}`
+        )
       }
     })
   } catch (cause) {

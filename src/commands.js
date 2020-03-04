@@ -50,7 +50,7 @@ const validate = async argv => {
 }
 
 const display = async argv => {
-  const {source} = argv
+  const { source } = argv
 
   switch (source) {
     case 'output':
@@ -60,10 +60,12 @@ const display = async argv => {
         forEach(r => {
           if (r.renderedTemplate) {
             log.info('')
-            log.info(chalk`{magentaBright [Source: ${r.src}, Destination: ${r.dest}]}`)
+            log.info(
+              chalk`{magentaBright [Source: ${r.src}, Destination: ${r.dest}]}`
+            )
             displayMultilineText(r.renderedTemplate)
           }
-        })
+        }),
       ])(argv)
       break
 
@@ -74,19 +76,16 @@ const display = async argv => {
         getGlobalConfig,
         get('valuesSchema'),
         toYaml,
-        displayMultilineText
+        displayMultilineText,
       ])(argv)
       break
 
     case 'values':
       log.info('')
       log.info(chalk`{magentaBright [Values]}`)
-      await flow([
-        getGlobalConfig,
-        getValues,
-        toYaml,
-        displayMultilineText
-      ])(argv)
+      await flow([getGlobalConfig, getValues, toYaml, displayMultilineText])(
+        argv
+      )
       break
   }
 }

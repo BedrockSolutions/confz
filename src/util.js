@@ -1,13 +1,14 @@
-const nodeFileEval = require('node-file-eval');
+const nodeFileEval = require('node-file-eval')
 const { extname } = require('path')
 
 const { readFile } = require('./fs')
 const { log } = require('./logging')
 const { loadFile } = require('./yaml')
 
-const displayMultilineText = text => text.split(/\r?\n/).forEach(line => log.info(line))
+const displayMultilineText = text =>
+  text.split(/\r?\n/).forEach(line => log.info(line))
 
-const loadFileAtPath = async (path) => {
+const loadFileAtPath = async path => {
   const ext = extname(path)
 
   switch (ext) {

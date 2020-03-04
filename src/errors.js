@@ -28,7 +28,9 @@ const displayError = (err, commandArgs) => {
       log.error(chalk`{yellow Message:} {red ${e.message}}`)
       Object.entries(VError.info(e)).forEach(([key, value]) =>
         log.error(
-          chalk`{yellow Info:} {magentaBright ${key}}: {blueBright ${displayInfoValue(value)}}`
+          chalk`{yellow Info:} {magentaBright ${key}}: {blueBright ${displayInfoValue(
+            value
+          )}}`
         )
       )
     })
@@ -53,6 +55,7 @@ const displayStackTrace = err => {
   }
 }
 
-const displayInfoValue = value => ['object', 'array'].includes(typeof value) ? JSON.stringify(value) : value
+const displayInfoValue = value =>
+  ['object', 'array'].includes(typeof value) ? JSON.stringify(value) : value
 
 module.exports = { traverseError }

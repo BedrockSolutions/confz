@@ -4,6 +4,6 @@ module.exports = values => ({
   a: ['boing', 'bounce'],
   b: {
     zzz: 'zzz',
-    yyy: 'yyy'
-  }
+    yyy: 'yyy',
+  },
 })

@@ -1,13 +1,8 @@
 const { cloneDeep } = require('lodash/fp')
 const { VError } = require('verror')
 
-const {exec} = require('./exec')
-const {
-  getFilesForPath,
-  readFile,
-  resolvePaths,
-  writeFile,
-} = require('./fs')
+const { exec } = require('./exec')
+const { getFilesForPath, readFile, resolvePaths, writeFile } = require('./fs')
 const { log } = require('./logging')
 const { renderTemplate, verifyTemplatePath } = require('./templates')
 const { validate } = require('./validation')
@@ -48,7 +43,7 @@ const RESOURCE_SCHEMA = {
   additionalProperties: false,
   oneOf: [
     {
-      required: ['owner', 'group']
+      required: ['owner', 'group'],
     },
     {
       properties: {
@@ -57,15 +52,15 @@ const RESOURCE_SCHEMA = {
         },
         group: {
           type: 'null',
-        }
-      }
+        },
+      },
     },
-  ]
+  ],
 }
 
 let noReload, resources
 
-const initResources = async ({noReload: _noReload, resourceDir}) => {
+const initResources = async ({ noReload: _noReload, resourceDir }) => {
   noReload = _noReload
 
   let resourcePaths
@@ -128,7 +123,11 @@ const processResources = async values => {
       const newRenderedTemplate = await renderTemplate(r.src, values)
 
       if (oldRenderedTemplate !== newRenderedTemplate) {
-        await writeFile(r.dest, newRenderedTemplate, {mode: r.mode && parseInt(r.mode.toString(10), 8), owner: r.owner, group: r.group})
+        await writeFile(r.dest, newRenderedTemplate, {
+          mode: r.mode && parseInt(r.mode.toString(10), 8),
+          owner: r.owner,
+          group: r.group,
+        })
         r.changed = true
         log.info(`Wrote file '${r.dest}'`)
       }

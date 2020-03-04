@@ -1,4 +1,4 @@
-const {multiply} = require('lodash')
+const { multiply } = require('lodash')
 
 const timesTwo = num => num * 2
 
